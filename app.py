@@ -3,7 +3,7 @@ import openpyxl
 from datetime import datetime
 import os
 
-# Nombre de tu archivo de Excel oficial en la carpeta
+# Nombre de tu archivo de Excel oficial en la carpeta/GitHub
 EXCEL_FILE = "datos.xlsx"
 
 st.set_page_config(page_title="QA/QC Geosintéticos HDPE", layout="wide")
@@ -11,7 +11,7 @@ st.set_page_config(page_title="QA/QC Geosintéticos HDPE", layout="wide")
 st.title("🛡️ Sistema de Registro QA/QC - Geosintéticos HDPE")
 st.markdown("Carga automática y estructurada de datos hacia los protocolos oficiales de Calidad.")
 
-# Selección del protocolo a llenar
+# Selección del protocolo a llenar (Menú Lateral)
 protocolo = st.sidebar.selectbox(
     "Selecciona el Protocolo / Módulo",
     [
@@ -23,6 +23,20 @@ protocolo = st.sidebar.selectbox(
         "Aceptación Superficie"
     ]
 )
+
+# ----------------- BOTÓN DE DESCARGA EN EL MENÚ LATERAL -----------------
+st.sidebar.markdown("---")
+st.sidebar.subheader("📥 Exportar Datos")
+if os.path.exists(EXCEL_FILE):
+    with open(EXCEL_FILE, "rb") as f:
+        st.sidebar.download_button(
+            label="📥 Descargar Excel Actualizado",
+            data=f,
+            file_name="datos_actualizados_QAQC.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+else:
+    st.sidebar.warning("Archivo Excel no encontrado en la nube.")
 
 # Cargar libro de Excel
 if not os.path.exists(EXCEL_FILE):
@@ -64,7 +78,6 @@ if protocolo == "Despliegue geosintéticos":
                 
                 area_panel = round(largo * ancho, 3)
 
-                # Asignación exacta según columnas del protocolo oficial
                 ws.cell(row=r, column=2, value=num_panel)
                 ws.cell(row=r, column=3, value=fecha.strftime("%Y-%m-%d"))
                 ws.cell(row=r, column=4, value=rollo_n)
