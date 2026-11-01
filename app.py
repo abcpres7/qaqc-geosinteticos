@@ -45,7 +45,6 @@ with st.sidebar.expander("⚙️ Opciones Avanzadas"):
     if st.button("🧹 Limpiar Todas las Planillas (Nuevo Día)"):
         try:
             wb = openpyxl.load_workbook(EXCEL_FILE)
-            # Rangos amplios para abarcar todas las filas de datos y cizalle en cada hoja
             rangos_limpieza = {
                 "Despliegue geosintéticos": (18, 70),
                 "Despliegue geotextil": (18, 100),
@@ -62,7 +61,7 @@ with st.sidebar.expander("⚙️ Opciones Avanzadas"):
                     ws = wb[sheet_name]
                     celdas_combinadas = ws.merged_cells.ranges
                     for r in range(fila_ini, fila_fin + 1):
-                        for c in range(1, 22):  # Limpiamos columnas de la 1 a la 21
+                        for c in range(1, 22):
                             es_combinada = False
                             for merged_range in celdas_combinadas:
                                 if (r >= merged_range.min_row and r <= merged_range.max_row and 
@@ -82,11 +81,11 @@ if not os.path.exists(EXCEL_FILE):
     st.error(f"No se encontró el archivo base '{EXCEL_FILE}'. Asegúrate de tenerlo en la misma carpeta.")
     st.stop()
 
-def encontrar_siguiente_fila(ws, columna_clave=2, fila_inicio=17):
+def encontrar_siguiente_fila(ws, columna_clave=2, fila_inicio=17, salto=1):
     """Busca la primera fila vacía en la columna clave dentro de la tabla oficial."""
     fila = fila_inicio
     while ws.cell(row=fila, column=columna_clave).value is not None:
-        fila += 1
+        fila += salto
     return fila
 
 # ----------------- 1. DESPLIEGUE GEOSINTÉTICOS -----------------
@@ -183,22 +182,35 @@ elif protocolo == "Puesta en servicio cuña":
             fecha = st.date_input("Fecha Prueba", datetime.now())
             hora = st.time_input("Hora Prueba", datetime.now().time())
         with c2:
-            maquina_id = st.text_input("Máquina N° / ID", "0872")
-            temp = st.text_input("Temperatura (ºC)", "460°")
-            vel = st.text_input("Velocidad Máquina", "2,7")
+            maquina_id = st.text_input("Máquina N° / ID", "GeoStar G7")
+            temp = st.text_input("Temperatura (ºC)", "450°")
+            vel = st.text_input("Velocidad Máquina", "2.5")
         with c3:
             ensayado_por = st.text_input("Ensayado Por (QC)", "Johnny Arias")
-            p1 = st.number_input("Probeta 1 (N)", value=550.0)
-            p2 = st.number_input("Probeta 2 (N)", value=530.0)
-            p3 = st.number_input("Probeta 3 (N)", value=540.0)
+            p1 = st.number_input("Desgarro Probeta 1 (N)", value=550.0)
+            p2 = st.number_input("Desgarro Probeta 2 (N)", value=530.0)
+            p3 = st.number_input("Desgarro Probeta 3 (N)", value=540.0)
+            p4 = st.number_input("Desgarro Probeta 4 (N)", value=520.0)
+            p5 = st.number_input("Desgarro Probeta 5 (N)", value=510.0)
+            
+            c1_v = st.number_input("Cizalle Probeta 1 (N)", value=600.0)
+            c2_v = st.number_input("Cizalle Probeta 2 (N)", value=590.0)
+            c3_v = st.number_input("Cizalle Probeta 3 (N)", value=580.0)
+            c4_v = st.number_input("Cizalle Probeta 4 (N)", value=570.0)
+            c5_v = st.number_input("Cizalle Probeta 5 (N)", value=560.0)
+            
+            ftb = st.selectbox("FTB", ["SI", "NO"])
+            ensayo_ok = st.selectbox("Ensayo OK", ["SI", "NO"])
 
         submitted = st.form_submit_button("💾 Guardar Prueba Inicial Cuña")
         if submitted:
             try:
                 wb = openpyxl.load_workbook(EXCEL_FILE)
                 ws = wb["Puesta en servicio cuña"]
-                r = encontrar_siguiente_fila(ws, columna_clave=2, fila_inicio=17)
+                # En cuña, cada registro ocupa 2 filas debido a las celdas combinadas
+                r = encontrar_siguiente_fila(ws, columna_clave=2, fila_inicio=17, salto=2)
 
+                # Fila superior (Fila r)
                 ws.cell(row=r, column=2, value=operador)
                 ws.cell(row=r, column=3, value=fecha.strftime("%Y-%m-%d"))
                 ws.cell(row=r, column=4, value=str(hora))
@@ -206,12 +218,27 @@ elif protocolo == "Puesta en servicio cuña":
                 ws.cell(row=r, column=6, value=temp)
                 ws.cell(row=r, column=7, value=vel)
                 ws.cell(row=r, column=8, value=ensayado_por)
+                
+                # Probetas de desgarro (Columna I a M / 9 a 13) - Fila r
                 ws.cell(row=r, column=9, value=p1)
                 ws.cell(row=r, column=10, value=p2)
                 ws.cell(row=r, column=11, value=p3)
+                ws.cell(row=r, column=12, value=p4)
+                ws.cell(row=r, column=13, value=p5)
+
+                # Probetas de cizalle (Columna N a R / 14 a 18) - Fila r
+                ws.cell(row=r, column=14, value=c1_v)
+                ws.cell(row=r, column=15, value=c2_v)
+                ws.cell(row=r, column=16, value=c3_v)
+                ws.cell(row=r, column=17, value=c4_v)
+                ws.cell(row=r, column=18, value=c5_v)
+
+                # FTB y Ensayo OK (Columnas 19 y 20)
+                ws.cell(row=r, column=19, value=ftb)
+                ws.cell(row=r, column=20, value=ensayo_ok)
 
                 wb.save(EXCEL_FILE)
-                st.success(f"✅ Prueba inicial de cuña registrada en la fila {r}.")
+                st.success(f"✅ Prueba inicial de cuña registrada correctamente en las filas {r} y {r+1}.")
             except Exception as e:
                 st.error(f"Error al guardar: {e}")
 
@@ -238,7 +265,7 @@ elif protocolo == "Puesta en servicio extrusora":
             try:
                 wb = openpyxl.load_workbook(EXCEL_FILE)
                 ws = wb["Puesta en servicio extrusora"]
-                r = encontrar_siguiente_fila(ws, columna_clave=2, fila_inicio=17)
+                r = encontrar_siguiente_fila(ws, columna_clave=2, fila_inicio=17, salto=2)
 
                 ws.cell(row=r, column=2, value=operador)
                 ws.cell(row=r, column=3, value=fecha.strftime("%Y-%m-%d"))
@@ -251,7 +278,7 @@ elif protocolo == "Puesta en servicio extrusora":
                 ws.cell(row=r, column=10, value=p2)
 
                 wb.save(EXCEL_FILE)
-                st.success(f"✅ Prueba inicial de extrusora registrada en la fila {r}.")
+                st.success(f"✅ Prueba inicial de extrusora registrada en las filas {r} y {r+1}.")
             except Exception as e:
                 st.error(f"Error al guardar: {e}")
 
@@ -365,7 +392,7 @@ elif protocolo == "Ensayos destructivos":
             try:
                 wb = openpyxl.load_workbook(EXCEL_FILE)
                 ws = wb["Ensayos destructivos"]
-                r = encontrar_siguiente_fila(ws, columna_clave=2, fila_inicio=17)
+                r = encontrar_siguiente_fila(ws, columna_clave=2, fila_inicio=17, salto=2)
 
                 ws.cell(row=r, column=2, value=destructivo_n)
                 ws.cell(row=r, column=3, value=union_paneles)
@@ -378,7 +405,7 @@ elif protocolo == "Ensayos destructivos":
                 ws.cell(row=r, column=12, value=res_3)
 
                 wb.save(EXCEL_FILE)
-                st.success(f"✅ Ensayo destructivo {destructivo_n} registrado en la fila {r}.")
+                st.success(f"✅ Ensayo destructivo {destructivo_n} registrado en las filas {r} y {r+1}.")
             except Exception as e:
                 st.error(f"Error al guardar: {e}")
 
