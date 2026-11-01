@@ -81,8 +81,8 @@ if not os.path.exists(EXCEL_FILE):
     st.error(f"No se encontró el archivo base '{EXCEL_FILE}'. Asegúrate de tenerlo en la misma carpeta.")
     st.stop()
 
-def encontrar_siguiente_fila(ws, columna_clave=2, fila_inicio=17, salto=1):
-    """Busca la primera fila vacía en la columna clave dentro de la tabla oficial."""
+def encontrar_siguiente_fila(ws, columna_clave=2, fila_inicio=17, salto=2):
+    """Busca la primera fila vacía en la columna clave para tablas con filas dobles."""
     fila = fila_inicio
     while ws.cell(row=fila, column=columna_clave).value is not None:
         fila += salto
@@ -112,7 +112,7 @@ if protocolo == "Despliegue geosintéticos":
             try:
                 wb = openpyxl.load_workbook(EXCEL_FILE)
                 ws = wb["Despliegue geosintéticos"]
-                r = encontrar_siguiente_fila(ws, columna_clave=2, fila_inicio=18)
+                r = encontrar_siguiente_fila(ws, columna_clave=2, fila_inicio=18, salto=1)
                 area_panel = round(largo * ancho, 3)
 
                 ws.cell(row=r, column=2, value=num_panel)
@@ -154,7 +154,7 @@ elif protocolo == "Despliegue geotextil":
             try:
                 wb = openpyxl.load_workbook(EXCEL_FILE)
                 ws = wb["Despliegue geotextil"]
-                r = encontrar_siguiente_fila(ws, columna_clave=2, fila_inicio=18)
+                r = encontrar_siguiente_fila(ws, columna_clave=2, fila_inicio=18, salto=1)
                 area_panel = round(largo * ancho, 3)
 
                 ws.cell(row=r, column=2, value=num_panel)
@@ -182,35 +182,84 @@ elif protocolo == "Puesta en servicio cuña":
             fecha = st.date_input("Fecha Prueba", datetime.now())
             hora = st.time_input("Hora Prueba", datetime.now().time())
         with c2:
-            maquina_id = st.text_input("Máquina N° / ID", "GeoStar G7")
+            maquina_id = st.text_input("Máquina N° / ID", "0872")
             temp = st.text_input("Temperatura (ºC)", "450°")
-            vel = st.text_input("Velocidad Máquina", "2.5")
+            vel = st.text_input("Velocidad Máquina", "3.0")
         with c3:
-            ensayado_por = st.text_input("Ensayado Por (QC)", "Johnny Arias")
-            p1 = st.number_input("Desgarro Probeta 1 (N)", value=550.0)
-            p2 = st.number_input("Desgarro Probeta 2 (N)", value=530.0)
-            p3 = st.number_input("Desgarro Probeta 3 (N)", value=540.0)
-            p4 = st.number_input("Desgarro Probeta 4 (N)", value=520.0)
-            p5 = st.number_input("Desgarro Probeta 5 (N)", value=510.0)
-            
-            c1_v = st.number_input("Cizalle Probeta 1 (N)", value=600.0)
-            c2_v = st.number_input("Cizalle Probeta 2 (N)", value=590.0)
-            c3_v = st.number_input("Cizalle Probeta 3 (N)", value=580.0)
-            c4_v = st.number_input("Cizalle Probeta 4 (N)", value=570.0)
-            c5_v = st.number_input("Cizalle Probeta 5 (N)", value=560.0)
-            
-            ftb = st.selectbox("FTB", ["SI", "NO"])
-            ensayo_ok = st.selectbox("Ensayo OK", ["SI", "NO"])
+            ensayado_por = st.text_input("Ensayado Por (QC)", "Monica Lupa")
+
+        st.markdown("---")
+        st.markdown("### 🧪 Ensayos de Desgarro (N) - Probetas 1 a 5 (Valores A y B)")
+        
+        # Probeta 1
+        st.markdown("**Probeta 1**")
+        col_a1, col_b1 = st.columns(2)
+        with col_a1:
+            p1_sup = st.number_input("Probeta 1 - [A] (Superior)", value=497.0, step=1.0)
+        with col_b1:
+            p1_inf = st.number_input("Probeta 1 - [B] (Inferior)", value=526.0, step=1.0)
+
+        # Probeta 2
+        st.markdown("**Probeta 2**")
+        col_a2, col_b2 = st.columns(2)
+        with col_a2:
+            p2_sup = st.number_input("Probeta 2 - [A] (Superior)", value=532.0, step=1.0)
+        with col_b2:
+            p2_inf = st.number_input("Probeta 2 - [B] (Inferior)", value=503.0, step=1.0)
+
+        # Probeta 3
+        st.markdown("**Probeta 3**")
+        col_a3, col_b3 = st.columns(2)
+        with col_a3:
+            p3_sup = st.number_input("Probeta 3 - [A] (Superior)", value=509.0, step=1.0)
+        with col_b3:
+            p3_inf = st.number_input("Probeta 3 - [B] (Inferior)", value=503.0, step=1.0)
+
+        # Probeta 4
+        st.markdown("**Probeta 4**")
+        col_a4, col_b4 = st.columns(2)
+        with col_a4:
+            p4_sup = st.number_input("Probeta 4 - [A] (Superior)", value=428.0, step=1.0)
+        with col_b4:
+            p4_inf = st.number_input("Probeta 4 - [B] (Inferior)", value=481.0, step=1.0)
+
+        # Probeta 5
+        st.markdown("**Probeta 5**")
+        col_a5, col_b5 = st.columns(2)
+        with col_a5:
+            p5_sup = st.number_input("Probeta 5 - [A] (Superior)", value=439.0, step=1.0)
+        with col_b5:
+            p5_inf = st.number_input("Probeta 5 - [B] (Inferior)", value=497.0, step=1.0)
+
+        st.markdown("---")
+        st.markdown("### 🧪 Ensayos de Cizalle (N) - Probetas 1 a 5")
+        cc1, cc2, cc3, cc4, cc5 = st.columns(5)
+        with cc1:
+            c1_v = st.number_input("Cizalle 1", value=658.0)
+        with cc2:
+            c2_v = st.number_input("Cizalle 2", value=595.0)
+        with cc3:
+            c3_v = st.number_input("Cizalle 3", value=555.0)
+        with cc4:
+            c4_v = st.number_input("Cizalle 4", value=595.0)
+        with cc5:
+            c5_v = st.number_input("Cizalle 5", value=612.0)
+
+        st.markdown("---")
+        cf1, cf2 = st.columns(2)
+        with cf1:
+            ftb = st.selectbox("FTB (Si / No)", ["SI", "NO"])
+        with cf2:
+            ensayo_ok = st.selectbox("Ensayo OK (Si / No)", ["SI", "NO"])
 
         submitted = st.form_submit_button("💾 Guardar Prueba Inicial Cuña")
         if submitted:
             try:
                 wb = openpyxl.load_workbook(EXCEL_FILE)
                 ws = wb["Puesta en servicio cuña"]
-                # En cuña, cada registro ocupa 2 filas debido a las celdas combinadas
                 r = encontrar_siguiente_fila(ws, columna_clave=2, fila_inicio=17, salto=2)
 
-                # Fila superior (Fila r)
+                # Datos Operador (Fila superior r)
                 ws.cell(row=r, column=2, value=operador)
                 ws.cell(row=r, column=3, value=fecha.strftime("%Y-%m-%d"))
                 ws.cell(row=r, column=4, value=str(hora))
@@ -218,15 +267,22 @@ elif protocolo == "Puesta en servicio cuña":
                 ws.cell(row=r, column=6, value=temp)
                 ws.cell(row=r, column=7, value=vel)
                 ws.cell(row=r, column=8, value=ensayado_por)
-                
-                # Probetas de desgarro (Columna I a M / 9 a 13) - Fila r
-                ws.cell(row=r, column=9, value=p1)
-                ws.cell(row=r, column=10, value=p2)
-                ws.cell(row=r, column=11, value=p3)
-                ws.cell(row=r, column=12, value=p4)
-                ws.cell(row=r, column=13, value=p5)
 
-                # Probetas de cizalle (Columna N a R / 14 a 18) - Fila r
+                # Desgarro Fila Superior (r) -> Columnas 9 a 13 (I a M)
+                ws.cell(row=r, column=9, value=p1_sup)
+                ws.cell(row=r, column=10, value=p2_sup)
+                ws.cell(row=r, column=11, value=p3_sup)
+                ws.cell(row=r, column=12, value=p4_sup)
+                ws.cell(row=r, column=13, value=p5_sup)
+
+                # Desgarro Fila Inferior (r+1) -> Columnas 9 a 13 (I a M)
+                ws.cell(row=r+1, column=9, value=p1_inf)
+                ws.cell(row=r+1, column=10, value=p2_inf)
+                ws.cell(row=r+1, column=11, value=p3_inf)
+                ws.cell(row=r+1, column=12, value=p4_inf)
+                ws.cell(row=r+1, column=13, value=p5_inf)
+
+                # Cizalle Fila Superior (r) -> Columnas 14 a 18 (N a R)
                 ws.cell(row=r, column=14, value=c1_v)
                 ws.cell(row=r, column=15, value=c2_v)
                 ws.cell(row=r, column=16, value=c3_v)
@@ -238,7 +294,7 @@ elif protocolo == "Puesta en servicio cuña":
                 ws.cell(row=r, column=20, value=ensayo_ok)
 
                 wb.save(EXCEL_FILE)
-                st.success(f"✅ Prueba inicial de cuña registrada correctamente en las filas {r} y {r+1}.")
+                st.success(f"✅ Prueba inicial de cuña registrada con éxito en las filas {r} y {r+1}.")
             except Exception as e:
                 st.error(f"Error al guardar: {e}")
 
@@ -306,7 +362,7 @@ elif protocolo == "Soldadura por cuña":
             try:
                 wb = openpyxl.load_workbook(EXCEL_FILE)
                 ws = wb["Soldadura por cuña"]
-                r = encontrar_siguiente_fila(ws, columna_clave=2, fila_inicio=17)
+                r = encontrar_siguiente_fila(ws, columna_clave=2, fila_inicio=17, salto=1)
 
                 ws.cell(row=r, column=2, value=union_n)
                 ws.cell(row=r, column=3, value=paneles)
@@ -350,7 +406,7 @@ elif protocolo == "Soldadura por extrusión":
             try:
                 wb = openpyxl.load_workbook(EXCEL_FILE)
                 ws = wb["Soldadura por extrusión"]
-                r = encontrar_siguiente_fila(ws, columna_clave=2, fila_inicio=17)
+                r = encontrar_siguiente_fila(ws, columna_clave=2, fila_inicio=17, salto=1)
 
                 ws.cell(row=r, column=2, value=parche_n)
                 ws.cell(row=r, column=3, value=ubicacion)
@@ -425,7 +481,7 @@ elif protocolo == "Aceptación Superficie":
             try:
                 wb = openpyxl.load_workbook(EXCEL_FILE)
                 ws = wb["Aceptación Superficie"]
-                r = encontrar_siguiente_fila(ws, columna_clave=2, fila_inicio=15)
+                r = encontrar_siguiente_fila(ws, columna_clave=2, fila_inicio=15, salto=1)
 
                 ws.cell(row=r, column=2, value=sector)
                 ws.cell(row=r, column=7, value=estado)
