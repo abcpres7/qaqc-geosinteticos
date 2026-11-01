@@ -38,20 +38,21 @@ if os.path.exists(EXCEL_FILE):
 else:
     st.sidebar.warning("Archivo Excel no encontrado.")
 
-# ----------------- BOTÓN DE REINICIO / LIMPIEZA DIARIA -----------------
+# ----------------- BOTÓN DE REINICIO / LIMPIEZA DIARIA TOTAL -----------------
 st.sidebar.markdown("---")
 with st.sidebar.expander("⚙️ Opciones Avanzadas"):
-    st.warning("⚠️ El botón de abajo borra los registros de las tablas para comenzar un nuevo día (recuerda descargar tu Excel antes).")
-    if st.button("🧹 Limpiar Planilla (Nuevo Día)"):
+    st.warning("⚠️ Este botón limpia los registros de **todas** las planillas para comenzar un nuevo día (recuerda descargar tu Excel antes).")
+    if st.button("🧹 Limpiar Todas las Planillas (Nuevo Día)"):
         try:
             wb = openpyxl.load_workbook(EXCEL_FILE)
+            # Rangos extendidos para asegurar el borrado total de cualquier dato histórico o de prueba
             rangos_limpieza = {
                 "Despliegue geosintéticos": (18, 56),
-                "Despliegue geotextil": (18, 90),
-                "Puesta en servicio cuña": (17, 58),
+                "Despliegue geotextil": (18, 94),
+                "Puesta en servicio cuña": (17, 60),
                 "Puesta en servicio extrusora": (17, 36),
-                "Soldadura por cuña": (17, 78),
-                "Soldadura por extrusión": (17, 68),
+                "Soldadura por cuña": (17, 80),
+                "Soldadura por extrusión": (17, 70),
                 "Ensayos destructivos": (17, 42),
                 "Aceptación Superficie": (15, 22)
             }
@@ -59,23 +60,20 @@ with st.sidebar.expander("⚙️ Opciones Avanzadas"):
             for sheet_name, (fila_ini, fila_fin) in rangos_limpieza.items():
                 if sheet_name in wb.sheetnames:
                     ws = wb[sheet_name]
-                    # Obtenemos todas las celdas combinadas de la hoja para no tocarlas
                     celdas_combinadas = ws.merged_cells.ranges
                     for r in range(fila_ini, fila_fin + 1):
-                        for c in range(1, 15):
-                            # Verificamos si la celda es parte de un rango combinado
+                        for c in range(1, 20):
                             es_combinada = False
                             for merged_range in celdas_combinadas:
                                 if (r >= merged_range.min_row and r <= merged_range.max_row and 
                                     c >= merged_range.min_col and c <= merged_range.max_col):
                                     es_combinada = True
                                     break
-                            # Si no es combinada, la limpiamos de forma segura
                             if not es_combinada:
                                 ws.cell(row=r, column=c).value = None
             
             wb.save(EXCEL_FILE)
-            st.sidebar.success("✅ ¡Planilla reiniciada con éxito para el nuevo día!")
+            st.sidebar.success("✅ ¡Todas las planillas fueron reiniciadas con éxito!")
             st.rerun()
         except Exception as e:
             st.sidebar.error(f"Error al limpiar: {e}")
