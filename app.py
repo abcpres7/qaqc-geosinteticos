@@ -1,3 +1,4 @@
+
 import streamlit as st
 import openpyxl
 from datetime import datetime
@@ -240,21 +241,18 @@ elif protocolo == "Puesta en servicio cuña":
                 ws.cell(row=r, column=7, value=vel)
                 ws.cell(row=r, column=8, value=ensayado_por)
 
-                # Desgarro Fila Superior (r)
                 ws.cell(row=r, column=9, value=p1_sup)
                 ws.cell(row=r, column=10, value=p2_sup)
                 ws.cell(row=r, column=11, value=p3_sup)
                 ws.cell(row=r, column=12, value=p4_sup)
                 ws.cell(row=r, column=13, value=p5_sup)
 
-                # Desgarro Fila Inferior (r+1)
                 ws.cell(row=r+1, column=9, value=p1_inf)
                 ws.cell(row=r+1, column=10, value=p2_inf)
                 ws.cell(row=r+1, column=11, value=p3_inf)
                 ws.cell(row=r+1, column=12, value=p4_inf)
                 ws.cell(row=r+1, column=13, value=p5_inf)
 
-                # Cizalle
                 ws.cell(row=r, column=14, value=c1_v)
                 ws.cell(row=r, column=15, value=c2_v)
                 ws.cell(row=r, column=16, value=c3_v)
@@ -286,27 +284,14 @@ elif protocolo == "Puesta en servicio extrusora":
             ensayado_por = st.text_input("Ensayado Por (QC)", "Brayan Flores")
 
         st.markdown("---")
-        st.markdown("### 🧪 Ensayos de Desgarro (N) - Probetas 1 a 5 (Valores A y B)")
+        st.markdown("### 🧪 Ensayos de Desgarro (N) - Probetas 1 a 5 (Valor A)")
         
-        col_ex1_a, col_ex1_b = st.columns(2)
-        with col_ex1_a: p1_sup = st.number_input("Probeta 1 - [A] (Superior)", value=446.0, step=1.0)
-        with col_ex1_b: p1_inf = st.number_input("Probeta 1 - [B] (Inferior)", value=420.0, step=1.0)
-
-        col_ex2_a, col_ex2_b = st.columns(2)
-        with col_ex2_a: p2_sup = st.number_input("Probeta 2 - [A] (Superior)", value=389.0, step=1.0)
-        with col_ex2_b: p2_inf = st.number_input("Probeta 2 - [B] (Inferior)", value=405.0, step=1.0)
-
-        col_ex3_a, col_ex3_b = st.columns(2)
-        with col_ex3_a: p3_sup = st.number_input("Probeta 3 - [A] (Superior)", value=395.0, step=1.0)
-        with col_ex3_b: p3_inf = st.number_input("Probeta 3 - [B] (Inferior)", value=412.0, step=1.0)
-
-        col_ex4_a, col_ex4_b = st.columns(2)
-        with col_ex4_a: p4_sup = st.number_input("Probeta 4 - [A] (Superior)", value=481.0, step=1.0)
-        with col_ex4_b: p4_inf = st.number_input("Probeta 4 - [B] (Inferior)", value=475.0, step=1.0)
-
-        col_ex5_a, col_ex5_b = st.columns(2)
-        with col_ex5_a: p5_sup = st.number_input("Probeta 5 - [A] (Superior)", value=332.0, step=1.0)
-        with col_ex5_b: p5_inf = st.number_input("Probeta 5 - [B] (Inferior)", value=350.0, step=1.0)
+        de1, de2, de3, de4, de5 = st.columns(5)
+        with de1: p1 = st.number_input("Probeta 1", value=446.0, step=1.0)
+        with de2: p2 = st.number_input("Probeta 2", value=389.0, step=1.0)
+        with de3: p3 = st.number_input("Probeta 3", value=395.0, step=1.0)
+        with de4: p4 = st.number_input("Probeta 4", value=481.0, step=1.0)
+        with de5: p5 = st.number_input("Probeta 5", value=332.0, step=1.0)
 
         st.markdown("---")
         st.markdown("### 🧪 Ensayos de Cizalle (N) - Probetas 1 a 5")
@@ -327,7 +312,8 @@ elif protocolo == "Puesta en servicio extrusora":
             try:
                 wb = openpyxl.load_workbook(EXCEL_FILE)
                 ws = wb["Puesta en servicio extrusora"]
-                r = encontrar_siguiente_fila(ws, columna_clave=2, fila_inicio=17, salto=2)
+                # Extrusora utiliza 1 fila por registro
+                r = encontrar_siguiente_fila(ws, columna_clave=2, fila_inicio=17, salto=1)
 
                 ws.cell(row=r, column=2, value=operador)
                 ws.cell(row=r, column=3, value=fecha.strftime("%Y-%m-%d"))
@@ -337,21 +323,14 @@ elif protocolo == "Puesta en servicio extrusora":
                 ws.cell(row=r, column=7, value=temp_ext)
                 ws.cell(row=r, column=8, value=ensayado_por)
 
-                # Desgarro Fila Superior (r) -> Columnas 9 a 13 (I a M)
-                ws.cell(row=r, column=9, value=p1_sup)
-                ws.cell(row=r, column=10, value=p2_sup)
-                ws.cell(row=r, column=11, value=p3_sup)
-                ws.cell(row=r, column=12, value=p4_sup)
-                ws.cell(row=r, column=13, value=p5_sup)
+                # Desgarro (Columnas 9 a 13 / I a M)
+                ws.cell(row=r, column=9, value=p1)
+                ws.cell(row=r, column=10, value=p2)
+                ws.cell(row=r, column=11, value=p3)
+                ws.cell(row=r, column=12, value=p4)
+                ws.cell(row=r, column=13, value=p5)
 
-                # Desgarro Fila Inferior (r+1) -> Columnas 9 a 13 (I a M)
-                ws.cell(row=r+1, column=9, value=p1_inf)
-                ws.cell(row=r+1, column=10, value=p2_inf)
-                ws.cell(row=r+1, column=11, value=p3_inf)
-                ws.cell(row=r+1, column=12, value=p4_inf)
-                ws.cell(row=r+1, column=13, value=p5_inf)
-
-                # Cizalle -> Columnas 14 a 18 (N a R)
+                # Cizalle (Columnas 14 a 18 / N a R)
                 ws.cell(row=r, column=14, value=c1_v)
                 ws.cell(row=r, column=15, value=c2_v)
                 ws.cell(row=r, column=16, value=c3_v)
@@ -363,7 +342,7 @@ elif protocolo == "Puesta en servicio extrusora":
                 ws.cell(row=r, column=20, value=ensayo_ok)
 
                 wb.save(EXCEL_FILE)
-                st.success(f"✅ Prueba inicial de extrusora registrada en las filas {r} y {r+1}.")
+                st.success(f"✅ Prueba inicial de extrusora registrada en la fila {r}.")
             except Exception as e:
                 st.error(f"Error al guardar: {e}")
 
