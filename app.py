@@ -1,4 +1,3 @@
-
 import streamlit as st
 import openpyxl
 from datetime import datetime, timedelta
@@ -28,14 +27,18 @@ protocolo = st.sidebar.selectbox(
 
 st.sidebar.markdown("---")
 st.sidebar.subheader("📥 Exportar y Gestionar")
+
+# Lectura en tiempo real del archivo actualizado para la descarga
 if os.path.exists(EXCEL_FILE):
     with open(EXCEL_FILE, "rb") as f:
-        st.sidebar.download_button(
-            label="📥 Descargar Excel Actualizado",
-            data=f,
-            file_name="datos_actualizados_QAQC.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
+        excel_bytes = f.read()
+    st.sidebar.download_button(
+        label="📥 Descargar Excel Actualizado",
+        data=excel_bytes,
+        file_name="datos_actualizados_QAQC.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        key="btn_download_excel"
+    )
 else:
     st.sidebar.warning("Archivo Excel no encontrado.")
 
@@ -130,6 +133,7 @@ if protocolo == "Despliegue geosintéticos":
 
                 wb.save(EXCEL_FILE)
                 st.success(f"✅ Panel N° {num_panel} registrado correctamente en la fila {r}.")
+                st.rerun()
             except Exception as e:
                 st.error(f"Error al guardar: {e}")
 
@@ -170,6 +174,7 @@ elif protocolo == "Despliegue geotextil":
 
                 wb.save(EXCEL_FILE)
                 st.success(f"✅ Geotextil N° {num_panel} registrado en la fila {r}.")
+                st.rerun()
             except Exception as e:
                 st.error(f"Error al guardar: {e}")
 
@@ -264,6 +269,7 @@ elif protocolo == "Puesta en servicio cuña":
 
                 wb.save(EXCEL_FILE)
                 st.success(f"✅ Prueba inicial de cuña registrada en las filas {r} y {r+1}.")
+                st.rerun()
             except Exception as e:
                 st.error(f"Error al guardar: {e}")
 
@@ -339,6 +345,7 @@ elif protocolo == "Puesta en servicio extrusora":
 
                 wb.save(EXCEL_FILE)
                 st.success(f"✅ Prueba inicial de extrusora registrada en la fila {r}.")
+                st.rerun()
             except Exception as e:
                 st.error(f"Error al guardar: {e}")
 
@@ -408,6 +415,7 @@ elif protocolo == "Soldadura por cuña":
 
                 wb.save(EXCEL_FILE)
                 st.success(f"✅ Costura {union_n} y prueba de aire registrada correctamente en la fila {r}.")
+                st.rerun()
             except Exception as e:
                 st.error(f"Error al guardar: {e}")
 
@@ -466,6 +474,7 @@ elif protocolo == "Soldadura por extrusión":
 
                 wb.save(EXCEL_FILE)
                 st.success(f"✅ Soldadura por extrusión {parche_n} guardada correctamente en la fila {r}.")
+                st.rerun()
             except Exception as e:
                 st.error(f"Error al guardar: {e}")
 
@@ -528,7 +537,6 @@ elif protocolo == "Ensayos destructivos":
             try:
                 wb = openpyxl.load_workbook(EXCEL_FILE)
                 ws = wb["Ensayos destructivos"]
-                # Ensayos destructivos usa 2 filas por registro (igual que cuña)
                 r = encontrar_siguiente_fila(ws, columna_clave=2, fila_inicio=17, salto=2)
 
                 ws.cell(row=r, column=2, value=destructivo_n)
@@ -540,33 +548,30 @@ elif protocolo == "Ensayos destructivos":
                 ws.cell(row=r, column=8, value=vel)
                 ws.cell(row=r, column=9, value=ensayado_por)
 
-                # Desgarro Fila Superior (r) -> Columnas 10 a 14 (J a N)
                 ws.cell(row=r, column=10, value=pd1_sup)
                 ws.cell(row=r, column=11, value=pd2_sup)
                 ws.cell(row=r, column=12, value=pd3_sup)
                 ws.cell(row=r, column=13, value=pd4_sup)
                 ws.cell(row=r, column=14, value=pd5_sup)
 
-                # Desgarro Fila Inferior (r+1) -> Columnas 10 a 14 (J a N)
                 ws.cell(row=r+1, column=10, value=pd1_inf)
                 ws.cell(row=r+1, column=11, value=pd2_inf)
                 ws.cell(row=r+1, column=12, value=pd3_inf)
                 ws.cell(row=r+1, column=13, value=pd4_inf)
                 ws.cell(row=r+1, column=14, value=pd5_inf)
 
-                # Cizalle Fila Superior (r) -> Columnas 15 a 19 (O a S)
                 ws.cell(row=r, column=15, value=cd1)
                 ws.cell(row=r, column=16, value=cd2)
                 ws.cell(row=r, column=17, value=cd3)
                 ws.cell(row=r, column=18, value=cd4)
                 ws.cell(row=r, column=19, value=cd5)
 
-                # FTB y Ensayo OK (Columnas 20 y 21)
                 ws.cell(row=r, column=20, value=ftb)
                 ws.cell(row=r, column=21, value=ensayo_ok)
 
                 wb.save(EXCEL_FILE)
                 st.success(f"✅ Ensayo destructivo {destructivo_n} registrado en las filas {r} y {r+1}.")
+                st.rerun()
             except Exception as e:
                 st.error(f"Error al guardar: {e}")
 
@@ -594,5 +599,6 @@ elif protocolo == "Aceptación Superficie":
 
                 wb.save(EXCEL_FILE)
                 st.success(f"✅ Aceptación de superficie guardada en la fila {r}.")
+                st.rerun()
             except Exception as e:
                 st.error(f"Error al guardar: {e}")
