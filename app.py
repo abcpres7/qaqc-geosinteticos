@@ -1,4 +1,3 @@
-
 import streamlit as st
 import openpyxl
 from datetime import datetime, timedelta
@@ -369,7 +368,6 @@ elif protocolo == "Soldadura por cuña":
             fecha_prueba = st.date_input("Fecha Prueba Presión", datetime.now())
             hora_ini_psi = st.time_input("Hora Inicio PSI", datetime.strptime("14:30", "%H:%M").time())
         with p2:
-            # Cálculo automático de la hora de término sumando 5 minutos
             dummy_dt = datetime.combine(datetime.today(), hora_ini_psi) + timedelta(minutes=5)
             hora_ter_psi = dummy_dt.time()
             st.info(f"⏱️ Hora Término PSI (Auto +5 min): **{hora_ter_psi.strftime('%H:%M')}**")
@@ -389,7 +387,6 @@ elif protocolo == "Soldadura por cuña":
                 ws = wb["Soldadura por cuña"]
                 r = encontrar_siguiente_fila(ws, columna_clave=2, fila_inicio=17, salto=1)
 
-                # Mapeo según el orden de columnas del Excel de Soldadura por Cuña:
                 ws.cell(row=r, column=2, value=union_n)
                 ws.cell(row=r, column=3, value=ubicacion)
                 ws.cell(row=r, column=4, value=fecha_sold.strftime("%Y-%m-%d"))
@@ -417,32 +414,44 @@ elif protocolo == "Soldadura por cuña":
 elif protocolo == "Soldadura por extrusión":
     st.subheader("🔥 Protocolo: Soldadura por Extrusión y Pruebas de Vacío")
     with st.form("form_extrusion"):
+        st.markdown("### 🛠️ Datos de Soldadura")
         c1, c2, c3 = st.columns(3)
         with c1:
-            parche_n = st.text_input("Parche Nº", "01")
-            ubicacion = st.text_input("Ubicación / Paneles", "P02-HD - P17,16-LL")
-            fecha = st.date_input("Fecha Soldadura", datetime.now())
+            parche_n = st.text_input("Parche Nº", "1")
+            ubicacion = st.text_input("Ubicación / Paneles", "P5-P6")
+            fecha_sold = st.date_input("Fecha Soldadura", datetime.now())
         with c2:
-            hora_sold = st.time_input("Hora Soldadura", datetime.now().time())
+            hora_sold = st.time_input("Hora Soldadura", datetime.strptime("12:54", "%H:%M").time())
             maquina = st.text_input("Máquina Nº (Leister)", "0532")
-            operador = st.text_input("Nombre Operador", "Jose Albarran")
+            operador = st.text_input("Nombre Operador", "Rene Espinoza")
         with c3:
             temp_ext = st.text_input("Temp. Extrusora °C", "230°")
             temp_pre = st.text_input("Temp. Precalentamiento", "180°")
-            probado_por = st.text_input("Probado Por (QC)", "Johnny Arias")
-            fecha_prueba = st.date_input("Fecha Prueba Vacío", datetime.now())
-            hora_prueba = st.time_input("Hora Prueba Vacío", datetime.now().time())
+            probado_por = st.text_input("Probado Por (QC)", "Diana Valdés")
 
-        submitted = st.form_submit_button("💾 Guardar Soldadura Extrusión")
+        st.markdown("---")
+        st.markdown("### 🔍 Prueba No Destructiva (Vacío / Spark Test)")
+        p1, p2, p3 = st.columns(3)
+        with p1:
+            fecha_prueba = st.date_input("Fecha Prueba Vacío", datetime.now())
+            hora_prueba = st.time_input("Hora Prueba Vacío", datetime.strptime("11:49", "%H:%M").time())
+        with p2:
+            resultado_ok = st.selectbox("Prueba No Destructiva OK", ["OK", "NO OK"])
+            construccion = st.selectbox("Construcción / Reparación", ["Construcción", "Reparación"])
+        with p3:
+            obs_tipo = st.selectbox("Observaciones (PV o ST)", ["PV", "ST"])
+
+        submitted = st.form_submit_button("💾 Guardar Soldadura Extrusión y Vacío")
         if submitted:
             try:
                 wb = openpyxl.load_workbook(EXCEL_FILE)
                 ws = wb["Soldadura por extrusión"]
                 r = encontrar_siguiente_fila(ws, columna_clave=2, fila_inicio=17, salto=1)
 
+                # Mapeo exacto según las columnas de la imagen de extrusora:
                 ws.cell(row=r, column=2, value=parche_n)
                 ws.cell(row=r, column=3, value=ubicacion)
-                ws.cell(row=r, column=4, value=fecha.strftime("%Y-%m-%d"))
+                ws.cell(row=r, column=4, value=fecha_sold.strftime("%Y-%m-%d"))
                 ws.cell(row=r, column=5, value=str(hora_sold))
                 ws.cell(row=r, column=6, value=maquina)
                 ws.cell(row=r, column=7, value=operador)
@@ -451,9 +460,12 @@ elif protocolo == "Soldadura por extrusión":
                 ws.cell(row=r, column=10, value=probado_por)
                 ws.cell(row=r, column=11, value=fecha_prueba.strftime("%Y-%m-%d"))
                 ws.cell(row=r, column=12, value=str(hora_prueba))
+                ws.cell(row=r, column=13, value=resultado_ok)
+                ws.cell(row=r, column=14, value=construccion)
+                ws.cell(row=r, column=15, value=obs_tipo)
 
                 wb.save(EXCEL_FILE)
-                st.success(f"✅ Soldadura por extrusión {parche_n} guardada en la fila {r}.")
+                st.success(f"✅ Soldadura por extrusión {parche_n} guardada correctamente en la fila {r}.")
             except Exception as e:
                 st.error(f"Error al guardar: {e}")
 
