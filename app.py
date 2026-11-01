@@ -41,20 +41,20 @@ else:
 # ----------------- BOTÓN DE REINICIO / LIMPIEZA DIARIA TOTAL -----------------
 st.sidebar.markdown("---")
 with st.sidebar.expander("⚙️ Opciones Avanzadas"):
-    st.warning("⚠️ Este botón limpia los registros de **todas** las planillas para comenzar un nuevo día (recuerda descargar tu Excel antes).")
+    st.warning("⚠️ Este botón limpia por completo los registros de **todas** las planillas para comenzar un nuevo día (recuerda descargar tu Excel antes).")
     if st.button("🧹 Limpiar Todas las Planillas (Nuevo Día)"):
         try:
             wb = openpyxl.load_workbook(EXCEL_FILE)
-            # Rangos extendidos para asegurar el borrado total de cualquier dato histórico o de prueba
+            # Rangos amplios para abarcar todas las filas de datos y cizalle en cada hoja
             rangos_limpieza = {
-                "Despliegue geosintéticos": (18, 56),
-                "Despliegue geotextil": (18, 94),
-                "Puesta en servicio cuña": (17, 60),
-                "Puesta en servicio extrusora": (17, 36),
-                "Soldadura por cuña": (17, 80),
-                "Soldadura por extrusión": (17, 70),
-                "Ensayos destructivos": (17, 42),
-                "Aceptación Superficie": (15, 22)
+                "Despliegue geosintéticos": (18, 70),
+                "Despliegue geotextil": (18, 100),
+                "Puesta en servicio cuña": (17, 70),
+                "Puesta en servicio extrusora": (17, 50),
+                "Soldadura por cuña": (17, 85),
+                "Soldadura por extrusión": (17, 80),
+                "Ensayos destructivos": (17, 60),
+                "Aceptación Superficie": (15, 25)
             }
             
             for sheet_name, (fila_ini, fila_fin) in rangos_limpieza.items():
@@ -62,7 +62,7 @@ with st.sidebar.expander("⚙️ Opciones Avanzadas"):
                     ws = wb[sheet_name]
                     celdas_combinadas = ws.merged_cells.ranges
                     for r in range(fila_ini, fila_fin + 1):
-                        for c in range(1, 20):
+                        for c in range(1, 22):  # Limpiamos columnas de la 1 a la 21
                             es_combinada = False
                             for merged_range in celdas_combinadas:
                                 if (r >= merged_range.min_row and r <= merged_range.max_row and 
@@ -73,7 +73,7 @@ with st.sidebar.expander("⚙️ Opciones Avanzadas"):
                                 ws.cell(row=r, column=c).value = None
             
             wb.save(EXCEL_FILE)
-            st.sidebar.success("✅ ¡Todas las planillas fueron reiniciadas con éxito!")
+            st.sidebar.success("✅ ¡Todas las planillas fueron reiniciadas y limpiadas al 100%!")
             st.rerun()
         except Exception as e:
             st.sidebar.error(f"Error al limpiar: {e}")
