@@ -1,3 +1,4 @@
+
 import streamlit as st
 import openpyxl
 from datetime import datetime, timedelta
@@ -448,7 +449,6 @@ elif protocolo == "Soldadura por extrusión":
                 ws = wb["Soldadura por extrusión"]
                 r = encontrar_siguiente_fila(ws, columna_clave=2, fila_inicio=17, salto=1)
 
-                # Mapeo exacto según las columnas de la imagen de extrusora:
                 ws.cell(row=r, column=2, value=parche_n)
                 ws.cell(row=r, column=3, value=ubicacion)
                 ws.cell(row=r, column=4, value=fecha_sold.strftime("%Y-%m-%d"))
@@ -481,17 +481,54 @@ elif protocolo == "Ensayos destructivos":
         with c2:
             maquina_id = st.text_input("Máquina N°", "0872")
             operador = st.text_input("Nombre Operador", "Jose Albarran")
-            temp = st.text_input("Temp (ºC)", "460°")
+            temp = st.text_input("Temp (ºC) Cuña", "460°")
         with c3:
-            res_1 = st.number_input("Probeta 1 (N)", value=480.0)
-            res_2 = st.number_input("Probeta 2 (N)", value=480.0)
-            res_3 = st.number_input("Probeta 3 (N)", value=503.0)
+            vel = st.text_input("Velocidad Máquina", "3,0")
+            ensayado_por = st.text_input("Ensayado Por (QC)", "Johnny Arias")
+
+        st.markdown("---")
+        st.markdown("### 🧪 Ensayos de Desgarro (N) - Probetas 1 a 5 (Valores A y B)")
+        
+        col_ad1, col_bd1 = st.columns(2)
+        with col_ad1: pd1_sup = st.number_input("Probeta 1 - [A] (Superior)", value=440.0, step=1.0)
+        with col_bd1: pd1_inf = st.number_input("Probeta 1 - [B] (Inferior)", value=480.0, step=1.0)
+
+        col_ad2, col_bd2 = st.columns(2)
+        with col_ad2: pd2_sup = st.number_input("Probeta 2 - [A] (Superior)", value=480.0, step=1.0)
+        with col_bd2: pd2_inf = st.number_input("Probeta 2 - [B] (Inferior)", value=480.0, step=1.0)
+
+        col_ad3, col_bd3 = st.columns(2)
+        with col_ad3: pd3_sup = st.number_input("Probeta 3 - [A] (Superior)", value=469.0, step=1.0)
+        with col_bd3: pd3_inf = st.number_input("Probeta 3 - [B] (Inferior)", value=503.0, step=1.0)
+
+        col_ad4, col_bd4 = st.columns(2)
+        with col_ad4: pd4_sup = st.number_input("Probeta 4 - [A] (Superior)", value=469.0, step=1.0)
+        with col_bd4: pd4_inf = st.number_input("Probeta 4 - [B] (Inferior)", value=434.0, step=1.0)
+
+        col_ad5, col_bd5 = st.columns(2)
+        with col_ad5: pd5_sup = st.number_input("Probeta 5 - [A] (Superior)", value=503.0, step=1.0)
+        with col_bd5: pd5_inf = st.number_input("Probeta 5 - [B] (Inferior)", value=463.0, step=1.0)
+
+        st.markdown("---")
+        st.markdown("### 🧪 Ensayos de Cizalle (N) - Probetas 1 a 5")
+        cc_d1, cc_d2, cc_d3, cc_d4, cc_d5 = st.columns(5)
+        with cc_d1: cd1 = st.number_input("Cizalle Dest. 1", value=646.0)
+        with cc_d2: cd2 = st.number_input("Cizalle Dest. 2", value=669.0)
+        with cc_d3: cd3 = st.number_input("Cizalle Dest. 3", value=641.0)
+        with cc_d4: cd4 = st.number_input("Cizalle Dest. 4", value=660.0)
+        with cc_d5: cd5 = st.number_input("Cizalle Dest. 5", value=594.0)
+
+        st.markdown("---")
+        cf_d1, cf_d2 = st.columns(2)
+        with cf_d1: ftb = st.selectbox("FTB (Si / No) - Destructivos", ["SI", "NO"])
+        with cf_d2: ensayo_ok = st.selectbox("Ensayo OK (Si / No) - Destructivos", ["SI", "NO"])
 
         submitted = st.form_submit_button("💾 Guardar Ensayo Destructivo")
         if submitted:
             try:
                 wb = openpyxl.load_workbook(EXCEL_FILE)
                 ws = wb["Ensayos destructivos"]
+                # Ensayos destructivos usa 2 filas por registro (igual que cuña)
                 r = encontrar_siguiente_fila(ws, columna_clave=2, fila_inicio=17, salto=2)
 
                 ws.cell(row=r, column=2, value=destructivo_n)
@@ -500,9 +537,33 @@ elif protocolo == "Ensayos destructivos":
                 ws.cell(row=r, column=5, value=maquina_id)
                 ws.cell(row=r, column=6, value=operador)
                 ws.cell(row=r, column=7, value=temp)
-                ws.cell(row=r, column=10, value=res_1)
-                ws.cell(row=r, column=11, value=res_2)
-                ws.cell(row=r, column=12, value=res_3)
+                ws.cell(row=r, column=8, value=vel)
+                ws.cell(row=r, column=9, value=ensayado_por)
+
+                # Desgarro Fila Superior (r) -> Columnas 10 a 14 (J a N)
+                ws.cell(row=r, column=10, value=pd1_sup)
+                ws.cell(row=r, column=11, value=pd2_sup)
+                ws.cell(row=r, column=12, value=pd3_sup)
+                ws.cell(row=r, column=13, value=pd4_sup)
+                ws.cell(row=r, column=14, value=pd5_sup)
+
+                # Desgarro Fila Inferior (r+1) -> Columnas 10 a 14 (J a N)
+                ws.cell(row=r+1, column=10, value=pd1_inf)
+                ws.cell(row=r+1, column=11, value=pd2_inf)
+                ws.cell(row=r+1, column=12, value=pd3_inf)
+                ws.cell(row=r+1, column=13, value=pd4_inf)
+                ws.cell(row=r+1, column=14, value=pd5_inf)
+
+                # Cizalle Fila Superior (r) -> Columnas 15 a 19 (O a S)
+                ws.cell(row=r, column=15, value=cd1)
+                ws.cell(row=r, column=16, value=cd2)
+                ws.cell(row=r, column=17, value=cd3)
+                ws.cell(row=r, column=18, value=cd4)
+                ws.cell(row=r, column=19, value=cd5)
+
+                # FTB y Ensayo OK (Columnas 20 y 21)
+                ws.cell(row=r, column=20, value=ftb)
+                ws.cell(row=r, column=21, value=ensayo_ok)
 
                 wb.save(EXCEL_FILE)
                 st.success(f"✅ Ensayo destructivo {destructivo_n} registrado en las filas {r} y {r+1}.")
