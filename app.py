@@ -1,7 +1,7 @@
 
 import streamlit as st
 import openpyxl
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 
 EXCEL_FILE = "datos.xlsx"
@@ -312,7 +312,6 @@ elif protocolo == "Puesta en servicio extrusora":
             try:
                 wb = openpyxl.load_workbook(EXCEL_FILE)
                 ws = wb["Puesta en servicio extrusora"]
-                # Extrusora utiliza 1 fila por registro
                 r = encontrar_siguiente_fila(ws, columna_clave=2, fila_inicio=17, salto=1)
 
                 ws.cell(row=r, column=2, value=operador)
@@ -323,21 +322,18 @@ elif protocolo == "Puesta en servicio extrusora":
                 ws.cell(row=r, column=7, value=temp_ext)
                 ws.cell(row=r, column=8, value=ensayado_por)
 
-                # Desgarro (Columnas 9 a 13 / I a M)
                 ws.cell(row=r, column=9, value=p1)
                 ws.cell(row=r, column=10, value=p2)
                 ws.cell(row=r, column=11, value=p3)
                 ws.cell(row=r, column=12, value=p4)
                 ws.cell(row=r, column=13, value=p5)
 
-                # Cizalle (Columnas 14 a 18 / N a R)
                 ws.cell(row=r, column=14, value=c1_v)
                 ws.cell(row=r, column=15, value=c2_v)
                 ws.cell(row=r, column=16, value=c3_v)
                 ws.cell(row=r, column=17, value=c4_v)
                 ws.cell(row=r, column=18, value=c5_v)
 
-                # FTB y Ensayo OK (Columnas 19 y 20)
                 ws.cell(row=r, column=19, value=ftb)
                 ws.cell(row=r, column=20, value=ensayo_ok)
 
@@ -350,42 +346,70 @@ elif protocolo == "Puesta en servicio extrusora":
 elif protocolo == "Soldadura por cuña":
     st.subheader("📋 Protocolo: Registro de Uniones Cuña y Pruebas de Aire")
     with st.form("form_cuna"):
+        st.markdown("### 🛠️ Datos de Unión y Soldadura")
         c1, c2, c3 = st.columns(3)
         with c1:
-            union_n = st.text_input("Unión Nº", "101")
-            paneles = st.text_input("Ubicación / Paneles", "P01-HD - P02-HD")
-            fecha = st.date_input("Fecha Soldadura", datetime.now())
+            union_n = st.text_input("Unión Nº", "1")
+            ubicacion = st.text_input("Ubicación / Paneles", "P1-P2")
+            fecha_sold = st.date_input("Fecha Soldadura", datetime.now())
         with c2:
-            hora_ini = st.time_input("Hora Inicio Soldadura", datetime.now().time())
-            hora_ter = st.time_input("Hora Término Soldadura", datetime.now().time())
+            hora_ini_sold = st.time_input("Hora Inicio Soldadura", datetime.strptime("12:56", "%H:%M").time())
+            hora_ter_sold = st.time_input("Hora Término Soldadura", datetime.strptime("14:06", "%H:%M").time())
             maquina = st.text_input("Máquina Nº", "0872")
         with c3:
             operador = st.text_input("Nombre Operador", "Jose Albarran")
-            temp = st.text_input("Temp. Cº", "460°")
-            velocidad = st.text_input("Velocidad Cuña", "2,7")
-            qc_asistente = st.text_input("Control Calidad", "Johnny Arias")
+            temp = st.text_input("Temp. Cº Cuña", "460°")
+            velocidad = st.text_input("Velocidad Cuña", "3,0")
+            qc_asistente = st.text_input("Probado Por (QC)", "Edgar Cruz")
 
-        submitted = st.form_submit_button("💾 Guardar Soldadura por Cuña")
+        st.markdown("---")
+        st.markdown("### 💨 Pruebas de Presión (Aire)")
+        p1, p2, p3 = st.columns(3)
+        with p1:
+            fecha_prueba = st.date_input("Fecha Prueba Presión", datetime.now())
+            hora_ini_psi = st.time_input("Hora Inicio PSI", datetime.strptime("14:30", "%H:%M").time())
+        with p2:
+            # Cálculo automático de la hora de término sumando 5 minutos
+            dummy_dt = datetime.combine(datetime.today(), hora_ini_psi) + timedelta(minutes=5)
+            hora_ter_psi = dummy_dt.time()
+            st.info(f"⏱️ Hora Término PSI (Auto +5 min): **{hora_ter_psi.strftime('%H:%M')}**")
+            
+            presion_ini = st.text_input("Presión Inicial (PSI)", "25")
+        with p3:
+            presion_ter = st.text_input("Presión Término (PSI)", "25")
+            prueba_ok = st.selectbox("Prueba OK (Si / No)", ["SI", "NO"])
+
+        st.markdown("---")
+        observaciones = st.text_area("Observaciones", "Union Memb. Etapa 1")
+
+        submitted = st.form_submit_button("💾 Guardar Soldadura por Cuña y Pruebas de Aire")
         if submitted:
             try:
                 wb = openpyxl.load_workbook(EXCEL_FILE)
                 ws = wb["Soldadura por cuña"]
                 r = encontrar_siguiente_fila(ws, columna_clave=2, fila_inicio=17, salto=1)
 
+                # Mapeo según el orden de columnas del Excel de Soldadura por Cuña:
                 ws.cell(row=r, column=2, value=union_n)
-                ws.cell(row=r, column=3, value=paneles)
-                ws.cell(row=r, column=4, value=fecha.strftime("%Y-%m-%d"))
-                ws.cell(row=r, column=5, value=str(hora_ini))
-                ws.cell(row=r, column=6, value=str(hora_ter))
+                ws.cell(row=r, column=3, value=ubicacion)
+                ws.cell(row=r, column=4, value=fecha_sold.strftime("%Y-%m-%d"))
+                ws.cell(row=r, column=5, value=str(hora_ini_sold))
+                ws.cell(row=r, column=6, value=str(hora_ter_sold))
                 ws.cell(row=r, column=7, value=maquina)
                 ws.cell(row=r, column=8, value=operador)
                 ws.cell(row=r, column=9, value=temp)
                 ws.cell(row=r, column=10, value=velocidad)
                 ws.cell(row=r, column=11, value=qc_asistente)
-                ws.cell(row=r, column=12, value=fecha.strftime("%Y-%m-%d"))
+                ws.cell(row=r, column=12, value=fecha_prueba.strftime("%Y-%m-%d"))
+                ws.cell(row=r, column=13, value=str(hora_ini_psi))
+                ws.cell(row=r, column=14, value=str(hora_ter_psi))
+                ws.cell(row=r, column=15, value=presion_ini)
+                ws.cell(row=r, column=16, value=presion_ter)
+                ws.cell(row=r, column=17, value=prueba_ok)
+                ws.cell(row=r, column=18, value=observaciones)
 
                 wb.save(EXCEL_FILE)
-                st.success(f"✅ Costura {union_n} registrada correctamente en la fila {r}.")
+                st.success(f"✅ Costura {union_n} y prueba de aire registrada correctamente en la fila {r}.")
             except Exception as e:
                 st.error(f"Error al guardar: {e}")
 
