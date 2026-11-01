@@ -1,4 +1,3 @@
-
 import streamlit as st
 import openpyxl
 from datetime import datetime
@@ -46,7 +45,6 @@ with st.sidebar.expander("⚙️ Opciones Avanzadas"):
     if st.button("🧹 Limpiar Planilla (Nuevo Día)"):
         try:
             wb = openpyxl.load_workbook(EXCEL_FILE)
-            # Definimos rangos de filas de datos a limpiar por hoja (sin tocar membretes ni firmas)
             rangos_limpieza = {
                 "Despliegue geosintéticos": (18, 56),
                 "Despliegue geotextil": (18, 90),
@@ -61,9 +59,20 @@ with st.sidebar.expander("⚙️ Opciones Avanzadas"):
             for sheet_name, (fila_ini, fila_fin) in rangos_limpieza.items():
                 if sheet_name in wb.sheetnames:
                     ws = wb[sheet_name]
+                    # Obtenemos todas las celdas combinadas de la hoja para no tocarlas
+                    celdas_combinadas = ws.merged_cells.ranges
                     for r in range(fila_ini, fila_fin + 1):
-                        for c in range(1, ws.max_column + 1):
-                            ws.cell(row=r, column=c).value = None
+                        for c in range(1, 15):
+                            # Verificamos si la celda es parte de un rango combinado
+                            es_combinada = False
+                            for merged_range in celdas_combinadas:
+                                if (r >= merged_range.min_row and r <= merged_range.max_row and 
+                                    c >= merged_range.min_col and c <= merged_range.max_col):
+                                    es_combinada = True
+                                    break
+                            # Si no es combinada, la limpiamos de forma segura
+                            if not es_combinada:
+                                ws.cell(row=r, column=c).value = None
             
             wb.save(EXCEL_FILE)
             st.sidebar.success("✅ ¡Planilla reiniciada con éxito para el nuevo día!")
