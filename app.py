@@ -81,8 +81,8 @@ if not os.path.exists(EXCEL_FILE):
     st.error(f"No se encontró el archivo base '{EXCEL_FILE}'. Asegúrate de tenerlo en la misma carpeta.")
     st.stop()
 
-def encontrar_siguiente_fila(ws, columna_clave=2, fila_inicio=17, salto=2):
-    """Busca la primera fila vacía en la columna clave para tablas con filas dobles."""
+def encontrar_siguiente_fila(ws, columna_clave=2, fila_inicio=17, salto=1):
+    """Busca la primera fila vacía en la columna clave dentro de la tabla oficial."""
     fila = fila_inicio
     while ws.cell(row=fila, column=columna_clave).value is not None:
         fila += salto
@@ -191,66 +191,39 @@ elif protocolo == "Puesta en servicio cuña":
         st.markdown("---")
         st.markdown("### 🧪 Ensayos de Desgarro (N) - Probetas 1 a 5 (Valores A y B)")
         
-        # Probeta 1
-        st.markdown("**Probeta 1**")
         col_a1, col_b1 = st.columns(2)
-        with col_a1:
-            p1_sup = st.number_input("Probeta 1 - [A] (Superior)", value=497.0, step=1.0)
-        with col_b1:
-            p1_inf = st.number_input("Probeta 1 - [B] (Inferior)", value=526.0, step=1.0)
+        with col_a1: p1_sup = st.number_input("Probeta 1 - [A] (Superior)", value=497.0, step=1.0)
+        with col_b1: p1_inf = st.number_input("Probeta 1 - [B] (Inferior)", value=526.0, step=1.0)
 
-        # Probeta 2
-        st.markdown("**Probeta 2**")
         col_a2, col_b2 = st.columns(2)
-        with col_a2:
-            p2_sup = st.number_input("Probeta 2 - [A] (Superior)", value=532.0, step=1.0)
-        with col_b2:
-            p2_inf = st.number_input("Probeta 2 - [B] (Inferior)", value=503.0, step=1.0)
+        with col_a2: p2_sup = st.number_input("Probeta 2 - [A] (Superior)", value=532.0, step=1.0)
+        with col_b2: p2_inf = st.number_input("Probeta 2 - [B] (Inferior)", value=503.0, step=1.0)
 
-        # Probeta 3
-        st.markdown("**Probeta 3**")
         col_a3, col_b3 = st.columns(2)
-        with col_a3:
-            p3_sup = st.number_input("Probeta 3 - [A] (Superior)", value=509.0, step=1.0)
-        with col_b3:
-            p3_inf = st.number_input("Probeta 3 - [B] (Inferior)", value=503.0, step=1.0)
+        with col_a3: p3_sup = st.number_input("Probeta 3 - [A] (Superior)", value=509.0, step=1.0)
+        with col_b3: p3_inf = st.number_input("Probeta 3 - [B] (Inferior)", value=503.0, step=1.0)
 
-        # Probeta 4
-        st.markdown("**Probeta 4**")
         col_a4, col_b4 = st.columns(2)
-        with col_a4:
-            p4_sup = st.number_input("Probeta 4 - [A] (Superior)", value=428.0, step=1.0)
-        with col_b4:
-            p4_inf = st.number_input("Probeta 4 - [B] (Inferior)", value=481.0, step=1.0)
+        with col_a4: p4_sup = st.number_input("Probeta 4 - [A] (Superior)", value=428.0, step=1.0)
+        with col_b4: p4_inf = st.number_input("Probeta 4 - [B] (Inferior)", value=481.0, step=1.0)
 
-        # Probeta 5
-        st.markdown("**Probeta 5**")
         col_a5, col_b5 = st.columns(2)
-        with col_a5:
-            p5_sup = st.number_input("Probeta 5 - [A] (Superior)", value=439.0, step=1.0)
-        with col_b5:
-            p5_inf = st.number_input("Probeta 5 - [B] (Inferior)", value=497.0, step=1.0)
+        with col_a5: p5_sup = st.number_input("Probeta 5 - [A] (Superior)", value=439.0, step=1.0)
+        with col_b5: p5_inf = st.number_input("Probeta 5 - [B] (Inferior)", value=497.0, step=1.0)
 
         st.markdown("---")
         st.markdown("### 🧪 Ensayos de Cizalle (N) - Probetas 1 a 5")
         cc1, cc2, cc3, cc4, cc5 = st.columns(5)
-        with cc1:
-            c1_v = st.number_input("Cizalle 1", value=658.0)
-        with cc2:
-            c2_v = st.number_input("Cizalle 2", value=595.0)
-        with cc3:
-            c3_v = st.number_input("Cizalle 3", value=555.0)
-        with cc4:
-            c4_v = st.number_input("Cizalle 4", value=595.0)
-        with cc5:
-            c5_v = st.number_input("Cizalle 5", value=612.0)
+        with cc1: c1_v = st.number_input("Cizalle 1", value=658.0)
+        with cc2: c2_v = st.number_input("Cizalle 2", value=595.0)
+        with cc3: c3_v = st.number_input("Cizalle 3", value=555.0)
+        with cc4: c4_v = st.number_input("Cizalle 4", value=595.0)
+        with cc5: c5_v = st.number_input("Cizalle 5", value=612.0)
 
         st.markdown("---")
         cf1, cf2 = st.columns(2)
-        with cf1:
-            ftb = st.selectbox("FTB (Si / No)", ["SI", "NO"])
-        with cf2:
-            ensayo_ok = st.selectbox("Ensayo OK (Si / No)", ["SI", "NO"])
+        with cf1: ftb = st.selectbox("FTB (Si / No)", ["SI", "NO"])
+        with cf2: ensayo_ok = st.selectbox("Ensayo OK (Si / No)", ["SI", "NO"])
 
         submitted = st.form_submit_button("💾 Guardar Prueba Inicial Cuña")
         if submitted:
@@ -259,13 +232,109 @@ elif protocolo == "Puesta en servicio cuña":
                 ws = wb["Puesta en servicio cuña"]
                 r = encontrar_siguiente_fila(ws, columna_clave=2, fila_inicio=17, salto=2)
 
-                # Datos Operador (Fila superior r)
                 ws.cell(row=r, column=2, value=operador)
                 ws.cell(row=r, column=3, value=fecha.strftime("%Y-%m-%d"))
                 ws.cell(row=r, column=4, value=str(hora))
                 ws.cell(row=r, column=5, value=maquina_id)
                 ws.cell(row=r, column=6, value=temp)
                 ws.cell(row=r, column=7, value=vel)
+                ws.cell(row=r, column=8, value=ensayado_por)
+
+                # Desgarro Fila Superior (r)
+                ws.cell(row=r, column=9, value=p1_sup)
+                ws.cell(row=r, column=10, value=p2_sup)
+                ws.cell(row=r, column=11, value=p3_sup)
+                ws.cell(row=r, column=12, value=p4_sup)
+                ws.cell(row=r, column=13, value=p5_sup)
+
+                # Desgarro Fila Inferior (r+1)
+                ws.cell(row=r+1, column=9, value=p1_inf)
+                ws.cell(row=r+1, column=10, value=p2_inf)
+                ws.cell(row=r+1, column=11, value=p3_inf)
+                ws.cell(row=r+1, column=12, value=p4_inf)
+                ws.cell(row=r+1, column=13, value=p5_inf)
+
+                # Cizalle
+                ws.cell(row=r, column=14, value=c1_v)
+                ws.cell(row=r, column=15, value=c2_v)
+                ws.cell(row=r, column=16, value=c3_v)
+                ws.cell(row=r, column=17, value=c4_v)
+                ws.cell(row=r, column=18, value=c5_v)
+
+                ws.cell(row=r, column=19, value=ftb)
+                ws.cell(row=r, column=20, value=ensayo_ok)
+
+                wb.save(EXCEL_FILE)
+                st.success(f"✅ Prueba inicial de cuña registrada en las filas {r} y {r+1}.")
+            except Exception as e:
+                st.error(f"Error al guardar: {e}")
+
+# ----------------- 4. PUESTA EN SERVICIO EXTRUSORA -----------------
+elif protocolo == "Puesta en servicio extrusora":
+    st.subheader("🔥 Protocolo: Pruebas Iniciales Extrusora")
+    with st.form("form_puesta_ext"):
+        c1, c2, c3 = st.columns(3)
+        with c1:
+            operador = st.text_input("Nombre Operador", "Rene Espinoza")
+            fecha = st.date_input("Fecha Prueba", datetime.now())
+            hora = st.time_input("Hora Prueba", datetime.now().time())
+        with c2:
+            maquina_id = st.text_input("Máquina N° (Leister)", "0532")
+            temp_pre = st.text_input("Temp. Precalentamiento", "180°")
+            temp_ext = st.text_input("Temperatura Extr. (ºC)", "230°")
+        with c3:
+            ensayado_por = st.text_input("Ensayado Por (QC)", "Brayan Flores")
+
+        st.markdown("---")
+        st.markdown("### 🧪 Ensayos de Desgarro (N) - Probetas 1 a 5 (Valores A y B)")
+        
+        col_ex1_a, col_ex1_b = st.columns(2)
+        with col_ex1_a: p1_sup = st.number_input("Probeta 1 - [A] (Superior)", value=446.0, step=1.0)
+        with col_ex1_b: p1_inf = st.number_input("Probeta 1 - [B] (Inferior)", value=420.0, step=1.0)
+
+        col_ex2_a, col_ex2_b = st.columns(2)
+        with col_ex2_a: p2_sup = st.number_input("Probeta 2 - [A] (Superior)", value=389.0, step=1.0)
+        with col_ex2_b: p2_inf = st.number_input("Probeta 2 - [B] (Inferior)", value=405.0, step=1.0)
+
+        col_ex3_a, col_ex3_b = st.columns(2)
+        with col_ex3_a: p3_sup = st.number_input("Probeta 3 - [A] (Superior)", value=395.0, step=1.0)
+        with col_ex3_b: p3_inf = st.number_input("Probeta 3 - [B] (Inferior)", value=412.0, step=1.0)
+
+        col_ex4_a, col_ex4_b = st.columns(2)
+        with col_ex4_a: p4_sup = st.number_input("Probeta 4 - [A] (Superior)", value=481.0, step=1.0)
+        with col_ex4_b: p4_inf = st.number_input("Probeta 4 - [B] (Inferior)", value=475.0, step=1.0)
+
+        col_ex5_a, col_ex5_b = st.columns(2)
+        with col_ex5_a: p5_sup = st.number_input("Probeta 5 - [A] (Superior)", value=332.0, step=1.0)
+        with col_ex5_b: p5_inf = st.number_input("Probeta 5 - [B] (Inferior)", value=350.0, step=1.0)
+
+        st.markdown("---")
+        st.markdown("### 🧪 Ensayos de Cizalle (N) - Probetas 1 a 5")
+        cc_ex1, cc_ex2, cc_ex3, cc_ex4, cc_ex5 = st.columns(5)
+        with cc_ex1: c1_v = st.number_input("Cizalle Ext. 1", value=492.0)
+        with cc_ex2: c2_v = st.number_input("Cizalle Ext. 2", value=475.0)
+        with cc_ex3: c3_v = st.number_input("Cizalle Ext. 3", value=544.0)
+        with cc_ex4: c4_v = st.number_input("Cizalle Ext. 4", value=526.0)
+        with cc_ex5: c5_v = st.number_input("Cizalle Ext. 5", value=520.0)
+
+        st.markdown("---")
+        cf_ex1, cf_ex2 = st.columns(2)
+        with cf_ex1: ftb = st.selectbox("FTB (Si / No) - Extrusora", ["SI", "NO"])
+        with cf_ex2: ensayo_ok = st.selectbox("Ensayo OK (Si / No) - Extrusora", ["SI", "NO"])
+
+        submitted = st.form_submit_button("💾 Guardar Prueba Inicial Extrusora")
+        if submitted:
+            try:
+                wb = openpyxl.load_workbook(EXCEL_FILE)
+                ws = wb["Puesta en servicio extrusora"]
+                r = encontrar_siguiente_fila(ws, columna_clave=2, fila_inicio=17, salto=2)
+
+                ws.cell(row=r, column=2, value=operador)
+                ws.cell(row=r, column=3, value=fecha.strftime("%Y-%m-%d"))
+                ws.cell(row=r, column=4, value=str(hora))
+                ws.cell(row=r, column=5, value=maquina_id)
+                ws.cell(row=r, column=6, value=temp_pre)
+                ws.cell(row=r, column=7, value=temp_ext)
                 ws.cell(row=r, column=8, value=ensayado_por)
 
                 # Desgarro Fila Superior (r) -> Columnas 9 a 13 (I a M)
@@ -282,7 +351,7 @@ elif protocolo == "Puesta en servicio cuña":
                 ws.cell(row=r+1, column=12, value=p4_inf)
                 ws.cell(row=r+1, column=13, value=p5_inf)
 
-                # Cizalle Fila Superior (r) -> Columnas 14 a 18 (N a R)
+                # Cizalle -> Columnas 14 a 18 (N a R)
                 ws.cell(row=r, column=14, value=c1_v)
                 ws.cell(row=r, column=15, value=c2_v)
                 ws.cell(row=r, column=16, value=c3_v)
@@ -292,46 +361,6 @@ elif protocolo == "Puesta en servicio cuña":
                 # FTB y Ensayo OK (Columnas 19 y 20)
                 ws.cell(row=r, column=19, value=ftb)
                 ws.cell(row=r, column=20, value=ensayo_ok)
-
-                wb.save(EXCEL_FILE)
-                st.success(f"✅ Prueba inicial de cuña registrada con éxito en las filas {r} y {r+1}.")
-            except Exception as e:
-                st.error(f"Error al guardar: {e}")
-
-# ----------------- 4. PUESTA EN SERVICIO EXTRUSORA -----------------
-elif protocolo == "Puesta en servicio extrusora":
-    st.subheader("🔥 Protocolo: Pruebas Iniciales Extrusora")
-    with st.form("form_puesta_ext"):
-        c1, c2, c3 = st.columns(3)
-        with c1:
-            operador = st.text_input("Nombre Operador", "Jose Albarran")
-            fecha = st.date_input("Fecha Prueba", datetime.now())
-            hora = st.time_input("Hora Prueba", datetime.now().time())
-        with c2:
-            maquina_id = st.text_input("Máquina N° (Leister)", "0532")
-            temp_ext = st.text_input("Temperatura Extr. (ºC)", "230°")
-            temp_pre = st.text_input("Temp. Precalentamiento", "180°")
-        with c3:
-            ensayado_por = st.text_input("Ensayado Por (QC)", "Diana Valdés")
-            p1 = st.number_input("Probeta 1 (N)", value=538.0)
-            p2 = st.number_input("Probeta 2 (N)", value=531.0)
-
-        submitted = st.form_submit_button("💾 Guardar Prueba Inicial Extrusora")
-        if submitted:
-            try:
-                wb = openpyxl.load_workbook(EXCEL_FILE)
-                ws = wb["Puesta en servicio extrusora"]
-                r = encontrar_siguiente_fila(ws, columna_clave=2, fila_inicio=17, salto=2)
-
-                ws.cell(row=r, column=2, value=operador)
-                ws.cell(row=r, column=3, value=fecha.strftime("%Y-%m-%d"))
-                ws.cell(row=r, column=4, value=str(hora))
-                ws.cell(row=r, column=5, value=maquina_id)
-                ws.cell(row=r, column=6, value=temp_pre)
-                ws.cell(row=r, column=7, value=temp_ext)
-                ws.cell(row=r, column=8, value=ensayado_por)
-                ws.cell(row=r, column=9, value=p1)
-                ws.cell(row=r, column=10, value=p2)
 
                 wb.save(EXCEL_FILE)
                 st.success(f"✅ Prueba inicial de extrusora registrada en las filas {r} y {r+1}.")
