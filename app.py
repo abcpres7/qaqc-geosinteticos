@@ -3,7 +3,8 @@ import openpyxl
 from datetime import datetime, timedelta
 import os
 
-EXCEL_FILE = "datos.xlsx"
+# Usar ruta absoluta para garantizar que sea exactamente el mismo archivo en cualquier ejecución de la nube
+EXCEL_FILE = os.path.abspath("datos.xlsx")
 
 st.set_page_config(page_title="QA/QC Geosintéticos HDPE", layout="wide")
 
@@ -28,7 +29,7 @@ protocolo = st.sidebar.selectbox(
 st.sidebar.markdown("---")
 st.sidebar.subheader("📥 Exportar y Gestionar")
 
-# Lectura en tiempo real del archivo actualizado para la descarga
+# Lectura directa y sin caché del archivo en disco para sincronización inmediata
 if os.path.exists(EXCEL_FILE):
     with open(EXCEL_FILE, "rb") as f:
         excel_bytes = f.read()
@@ -37,10 +38,10 @@ if os.path.exists(EXCEL_FILE):
         data=excel_bytes,
         file_name="datos_actualizados_QAQC.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        key="btn_download_excel"
+        key="btn_download_excel_sync"
     )
 else:
-    st.sidebar.warning("Archivo Excel no encontrado.")
+    st.sidebar.warning(f"Archivo Excel no encontrado en ruta: {EXCEL_FILE}")
 
 # ----------------- BOTÓN DE REINICIO / LIMPIEZA DIARIA TOTAL -----------------
 st.sidebar.markdown("---")
@@ -49,15 +50,16 @@ with st.sidebar.expander("⚙️ Opciones Avanzadas"):
     if st.button("🧹 Limpiar Todas las Planillas (Nuevo Día)"):
         try:
             wb = openpyxl.load_workbook(EXCEL_FILE)
+            # Rangos amplios y seguros para barrer absolutamente todas las hojas y filas
             rangos_limpieza = {
-                "Despliegue geosintéticos": (18, 70),
-                "Despliegue geotextil": (18, 100),
-                "Puesta en servicio cuña": (17, 70),
-                "Puesta en servicio extrusora": (17, 50),
-                "Soldadura por cuña": (17, 85),
-                "Soldadura por extrusión": (17, 80),
-                "Ensayos destructivos": (17, 60),
-                "Aceptación Superficie": (15, 25)
+                "Despliegue geosintéticos": (18, 100),
+                "Despliegue geotextil": (18, 150),
+                "Puesta en servicio cuña": (17, 100),
+                "Puesta en servicio extrusora": (17, 100),
+                "Soldadura por cuña": (17, 150),
+                "Soldadura por extrusión": (17, 150),
+                "Ensayos destructivos": (17, 100),
+                "Aceptación Superficie": (15, 50)
             }
             
             for sheet_name, (fila_ini, fila_fin) in rangos_limpieza.items():
@@ -65,7 +67,7 @@ with st.sidebar.expander("⚙️ Opciones Avanzadas"):
                     ws = wb[sheet_name]
                     celdas_combinadas = ws.merged_cells.ranges
                     for r in range(fila_ini, fila_fin + 1):
-                        for c in range(1, 22):
+                        for c in range(1, 25):  # Limpiamos hasta la columna 24 para asegurar todo
                             es_combinada = False
                             for merged_range in celdas_combinadas:
                                 if (r >= merged_range.min_row and r <= merged_range.max_row and 
