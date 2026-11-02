@@ -5,8 +5,8 @@ import streamlit as st
 from supabase import create_client, Client
 
 # --- CREDENCIALES DE SUPABASE (Pega aquí tus datos del bloc de notas) ---
-SUPABASE_URL = "PEGAR_AQUÍ_TU_PROJECT_URL"
-SUPABASE_KEY = "PEGAR_AQUÍ_TU_PUBLISHABLE_KEY"
+SUPABASE_URL = "https://fizrnuzuajkdrthzsliee.supabase.co"
+SUPABASE_KEY = "sb_publishable_AD17utXodOnFrdvb28kfvg_0B5hZNG1"
 
 # Inicializar conexión con Supabase
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
