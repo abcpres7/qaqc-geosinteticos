@@ -1,3 +1,4 @@
+
 from datetime import datetime, timedelta
 import os
 import openpyxl
@@ -48,22 +49,23 @@ if os.path.exists(EXCEL_FILE):
 else:
     st.sidebar.warning("No se encontró el archivo Excel local.")
 
-# ----------------- BOTÓN DE REINICIO / LIMPIEZA TOTAL -----------------
+# ----------------- BOTÓN DE REINICIO / LIMPIEZA TOTAL PROFUNDA -----------------
 st.sidebar.markdown("---")
 with st.sidebar.expander("⚙️ Opciones Avanzadas"):
-    st.warning("⚠️ Limpia por completo todas las planillas locales.")
+    st.warning("⚠️ Limpia por completo todas las planillas (rango ampliado hasta fila 300).")
     if st.button("🧹 Limpiar Todas las Planillas (Nuevo Día)"):
         try:
             wb = openpyxl.load_workbook(EXCEL_FILE)
+            # Rango ampliado a 300 para asegurar el borrado total de Ensayos Destructivos y Soldaduras
             rangos_limpieza = {
-                "Despliegue geosintéticos": (18, 100),
-                "Despliegue geotextil": (18, 150),
-                "Puesta en servicio cuña": (17, 100),
-                "Puesta en servicio extrusora": (17, 100),
-                "Soldadura por cuña": (17, 150),
-                "Soldadura por extrusión": (17, 150),
-                "Ensayos destructivos": (17, 100),
-                "Aceptación Superficie": (15, 50)
+                "Despliegue geosintéticos": (18, 300),
+                "Despliegue geotextil": (18, 300),
+                "Puesta en servicio cuña": (17, 300),
+                "Puesta en servicio extrusora": (17, 300),
+                "Soldadura por cuña": (17, 300),
+                "Soldadura por extrusión": (17, 300),
+                "Ensayos destructivos": (17, 300),
+                "Aceptación Superficie": (15, 200)
             }
             
             for sheet_name, (fila_ini, fila_fin) in rangos_limpieza.items():
@@ -82,7 +84,7 @@ with st.sidebar.expander("⚙️ Opciones Avanzadas"):
                                 ws.cell(row=r, column=c).value = None
             
             wb.save(EXCEL_FILE)
-            st.sidebar.success("✅ ¡Planillas limpiadas localmente con éxito!")
+            st.sidebar.success("✅ ¡Planillas limpiadas por completo hasta la fila 300!")
             st.rerun()
         except Exception as e:
             st.sidebar.error(f"Error al limpiar: {e}")
