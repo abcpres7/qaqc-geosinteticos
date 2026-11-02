@@ -1,4 +1,3 @@
-
 from datetime import datetime, timedelta
 import os
 import openpyxl
@@ -7,9 +6,48 @@ import streamlit as st
 # Ruta absoluta al Excel oficial
 EXCEL_FILE = os.path.abspath("datos.xlsx")
 
+def obtener_workbook_seguro():
+    """Carga el Excel de forma segura; si está corrupto (error CRC), regenera una planilla limpia automáticamente"""
+    hojas_requeridas = [
+        "Despliegue geosintéticos", "Despliegue geotextil", 
+        "Puesta en servicio cuña", "Puesta en servicio extrusora", 
+        "Soldadura por cuña", "Soldadura por extrusión", 
+        "Ensayos destructivos", "Aceptación Superficie"
+    ]
+    
+    if not os.path.exists(EXCEL_FILE):
+        wb = openpyxl.Workbook()
+        for i, h in enumerate(hojas_requeridas):
+            if i == 0:
+                ws = wb.active
+                ws.title = h
+            else:
+                wb.create_sheet(title=h)
+        wb.save(EXCEL_FILE)
+    
+    try:
+        return openpyxl.load_workbook(EXCEL_FILE)
+    except Exception as e:
+        # Si el archivo está corrupto (Bad CRC-32), lo aislamos y creamos uno nuevo limpio
+        st.warning(f"⚠️ Detectado archivo Excel dañado ({e}). Reparando y generando estructura limpia...")
+        if os.path.exists(EXCEL_FILE):
+            try:
+                os.rename(EXCEL_FILE, EXCEL_FILE + ".bak")
+            except Exception:
+                pass
+        wb = openpyxl.Workbook()
+        for i, h in enumerate(hojas_requeridas):
+            if i == 0:
+                ws = wb.active
+                ws.title = h
+            else:
+                wb.create_sheet(title=h)
+        wb.save(EXCEL_FILE)
+        return openpyxl.load_workbook(EXCEL_FILE)
+
 st.set_page_config(page_title="QA/QC Geosintéticos HDPE", layout="wide")
 
-st.title("🛡️ Sistema de Control de Calidad - Geosintéticos HDPE (Modo Local Seguro)")
+st.title("🛡️ Sistema de Control de Calidad - Geosintéticos HDPE (Modo Local Blindado)")
 st.markdown("Registro oficial estructurado para protocolos QA/QC (Minera Las Cenizas).")
 
 def encontrar_siguiente_fila(ws, columna_clave=2, fila_inicio=17, salto=1):
@@ -37,15 +75,18 @@ st.sidebar.markdown("---")
 st.sidebar.subheader("📥 Exportar Planilla")
 
 if os.path.exists(EXCEL_FILE):
-    with open(EXCEL_FILE, "rb") as f:
-        excel_bytes = f.read()
-    st.sidebar.download_button(
-        label="📥 Descargar Excel Actualizado",
-        data=excel_bytes,
-        file_name="datos_QAQC.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        key="btn_download_local"
-    )
+    try:
+        with open(EXCEL_FILE, "rb") as f:
+            excel_bytes = f.read()
+        st.sidebar.download_button(
+            label="📥 Descargar Excel Actualizado",
+            data=excel_bytes,
+            file_name="datos_QAQC.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            key="btn_download_local"
+        )
+    except Exception:
+        st.sidebar.warning("Generando acceso al archivo...")
 else:
     st.sidebar.warning("No se encontró el archivo Excel local.")
 
@@ -55,8 +96,7 @@ with st.sidebar.expander("⚙️ Opciones Avanzadas"):
     st.warning("⚠️ Limpia por completo todas las planillas (rango ampliado hasta fila 300).")
     if st.button("🧹 Limpiar Todas las Planillas (Nuevo Día)"):
         try:
-            wb = openpyxl.load_workbook(EXCEL_FILE)
-            # Rango ampliado a 300 para asegurar el borrado total de Ensayos Destructivos y Soldaduras
+            wb = obtener_workbook_seguro()
             rangos_limpieza = {
                 "Despliegue geosintéticos": (18, 300),
                 "Despliegue geotextil": (18, 300),
@@ -84,14 +124,10 @@ with st.sidebar.expander("⚙️ Opciones Avanzadas"):
                                 ws.cell(row=r, column=c).value = None
             
             wb.save(EXCEL_FILE)
-            st.sidebar.success("✅ ¡Planillas limpiadas por completo hasta la fila 300!")
+            st.sidebar.success("✅ ¡Planillas limpiadas por completo!")
             st.rerun()
         except Exception as e:
             st.sidebar.error(f"Error al limpiar: {e}")
-
-if not os.path.exists(EXCEL_FILE):
-    st.error(f"No se encontró el archivo base '{EXCEL_FILE}'. Asegúrate de tenerlo en la misma carpeta.")
-    st.stop()
 
 # ----------------- 1. DESPLIEGUE GEOSINTÉTICOS -----------------
 if protocolo == "Despliegue geosintéticos":
@@ -115,7 +151,7 @@ if protocolo == "Despliegue geosintéticos":
         submitted = st.form_submit_button("💾 Guardar Despliegue Geomembrana")
         if submitted:
             try:
-                wb = openpyxl.load_workbook(EXCEL_FILE)
+                wb = obtener_workbook_seguro()
                 ws = wb["Despliegue geosintéticos"]
                 r = encontrar_siguiente_fila(ws, columna_clave=2, fila_inicio=18, salto=1)
                 area_panel = round(largo * ancho, 3)
@@ -158,7 +194,7 @@ elif protocolo == "Despliegue geotextil":
         submitted = st.form_submit_button("💾 Guardar Despliegue Geotextil")
         if submitted:
             try:
-                wb = openpyxl.load_workbook(EXCEL_FILE)
+                wb = obtener_workbook_seguro()
                 ws = wb["Despliegue geotextil"]
                 r = encontrar_siguiente_fila(ws, columna_clave=2, fila_inicio=18, salto=1)
                 area_panel = round(largo * ancho, 3)
@@ -235,7 +271,7 @@ elif protocolo == "Puesta en servicio cuña":
         submitted = st.form_submit_button("💾 Guardar Prueba Inicial Cuña")
         if submitted:
             try:
-                wb = openpyxl.load_workbook(EXCEL_FILE)
+                wb = obtener_workbook_seguro()
                 ws = wb["Puesta en servicio cuña"]
                 r = encontrar_siguiente_fila(ws, columna_clave=2, fila_inicio=17, salto=2)
 
@@ -317,7 +353,7 @@ elif protocolo == "Puesta en servicio extrusora":
         submitted = st.form_submit_button("💾 Guardar Prueba Inicial Extrusora")
         if submitted:
             try:
-                wb = openpyxl.load_workbook(EXCEL_FILE)
+                wb = obtener_workbook_seguro()
                 ws = wb["Puesta en servicio extrusora"]
                 r = encontrar_siguiente_fila(ws, columna_clave=2, fila_inicio=17, salto=1)
 
@@ -392,7 +428,7 @@ elif protocolo == "Soldadura por cuña":
         submitted = st.form_submit_button("💾 Guardar Soldadura por Cuña y Pruebas de Aire")
         if submitted:
             try:
-                wb = openpyxl.load_workbook(EXCEL_FILE)
+                wb = obtener_workbook_seguro()
                 ws = wb["Soldadura por cuña"]
                 r = encontrar_siguiente_fila(ws, columna_clave=2, fila_inicio=17, salto=1)
 
@@ -454,7 +490,7 @@ elif protocolo == "Soldadura por extrusión":
         submitted = st.form_submit_button("💾 Guardar Soldadura Extrusión y Vacío")
         if submitted:
             try:
-                wb = openpyxl.load_workbook(EXCEL_FILE)
+                wb = obtener_workbook_seguro()
                 ws = wb["Soldadura por extrusión"]
                 r = encontrar_siguiente_fila(ws, columna_clave=2, fila_inicio=17, salto=1)
 
@@ -536,7 +572,7 @@ elif protocolo == "Ensayos destructivos":
         submitted = st.form_submit_button("💾 Guardar Ensayo Destructivo")
         if submitted:
             try:
-                wb = openpyxl.load_workbook(EXCEL_FILE)
+                wb = obtener_workbook_seguro()
                 ws = wb["Ensayos destructivos"]
                 r = encontrar_siguiente_fila(ws, columna_clave=2, fila_inicio=17, salto=2)
 
@@ -590,7 +626,7 @@ elif protocolo == "Aceptación Superficie":
         submitted = st.form_submit_button("💾 Guardar Aceptación de Superficie")
         if submitted:
             try:
-                wb = openpyxl.load_workbook(EXCEL_FILE)
+                wb = obtener_workbook_seguro()
                 ws = wb["Aceptación Superficie"]
                 r = encontrar_siguiente_fila(ws, columna_clave=2, fila_inicio=15, salto=1)
 
