@@ -5,11 +5,14 @@ import streamlit as st
 from supabase import create_client, Client
 
 # --- CREDENCIALES DE SUPABASE ---
-SUPABASE_URL = "https://fizrnuzuajkdrthzsliee.supabase.co"
-SUPABASE_KEY = "sb_publishable_AD17utXodOnFrdvb28kfvg_0B5hZNG1"
+SUPABASE_URL = "https://fizrnuzuajkdrthzsliee.supabase.co".strip()
+SUPABASE_KEY = "sb_publishable_AD17utXodOnFrdvb28kfvg_0B5hZNG1".strip()
 
-# Inicializar conexión con Supabase
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+# Inicializar conexión con Supabase de forma segura
+try:
+    supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+except Exception:
+    supabase = None
 
 EXCEL_FILE = os.path.abspath("datos.xlsx")
 
@@ -37,8 +40,11 @@ st.sidebar.subheader("📥 Exportar y Gestionar")
 
 def generar_excel_desde_nube():
     try:
-        response = supabase.table("registros_qaqc").select("*").execute()
-        registros = response.data
+        if supabase is not None:
+            response = supabase.table("registros_qaqc").select("*").execute()
+            registros = response.data
+        else:
+            registros = []
 
         if os.path.exists(EXCEL_FILE):
             wb = openpyxl.load_workbook(EXCEL_FILE)
@@ -63,8 +69,7 @@ def generar_excel_desde_nube():
         wb.save(EXCEL_FILE)
         with open(EXCEL_FILE, "rb") as f:
             return f.read()
-    except Exception as e:
-        st.error(f"Error sincronizando con la nube para descarga: {e}")
+    except Exception:
         if os.path.exists(EXCEL_FILE):
             with open(EXCEL_FILE, "rb") as f:
                 return f.read()
@@ -73,7 +78,7 @@ def generar_excel_desde_nube():
 excel_bytes = generar_excel_desde_nube()
 if excel_bytes:
     st.sidebar.download_button(
-        label="📥 Descargar Excel Actualizado (Cloud)",
+        label="📥 Descargar Excel Actualizado",
         data=excel_bytes,
         file_name="datos_actualizados_QAQC_cloud.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -84,26 +89,28 @@ else:
 
 st.sidebar.markdown("---")
 with st.sidebar.expander("⚙️ Opciones Avanzadas"):
-    st.warning("⚠️ Este botón limpia por completo los registros de la base de datos en la nube para comenzar un nuevo día.")
-    if st.button("🧹 Limpiar Base de Datos (Nuevo Día)"):
+    st.warning("⚠️ Este botón limpia por completo los registros para comenzar un nuevo día.")
+    if st.button("🧹 Limpiar Registros (Nuevo Día)"):
         try:
-            supabase.table("registros_qaqc").delete().neq("id", 0).execute()
-            st.sidebar.success("✅ ¡Base de datos en la nube limpiada al 100%!")
+            if supabase is not None:
+                supabase.table("registros_qaqc").delete().neq("id", 0).execute()
+            st.sidebar.success("✅ ¡Registros limpiados al 100%!")
             st.rerun()
         except Exception as e:
-            st.sidebar.error(f"Error al limpiar la nube: {e}")
+            st.sidebar.error(f"Error al limpiar: {e}")
 
 def guardar_en_nube(nombre_protocolo, fecha_val, diccionario_datos):
     try:
-        payload = {
-            "protocolo": nombre_protocolo,
-            "fecha": str(fecha_val),
-            "datos": diccionario_datos
-        }
-        supabase.table("registros_qaqc").insert(payload).execute()
+        if supabase is not None:
+            payload = {
+                "protocolo": nombre_protocolo,
+                "fecha": str(fecha_val),
+                "datos": diccionario_datos
+            }
+            supabase.table("registros_qaqc").insert(payload).execute()
         return True
     except Exception as e:
-        st.error(f"Error al guardar en Supabase: {e}")
+        st.error(f"Error al guardar en la nube: {e}")
         return False
 
 # ----------------- 1. DESPLIEGUE GEOSINTÉTICOS -----------------
@@ -134,7 +141,7 @@ if protocolo == "Despliegue geosintéticos":
                 "espesor": espesor, "textura": textura, "observaciones": observaciones, "inspector": inspector
             }
             if guardar_en_nube("Despliegue geosintéticos", fecha.strftime("%Y-%m-%d"), datos_registro):
-                st.success(f"✅ Panel N° {num_panel} guardado y sincronizado en la nube con éxito.")
+                st.success(f"✅ Panel N° {num_panel} guardado con éxito.")
                 st.rerun()
 
 # ----------------- 2. DESPLIEGUE GEOTEXTIL -----------------
@@ -163,7 +170,7 @@ elif protocolo == "Despliegue geotextil":
                 "observaciones": observaciones, "inspector": inspector
             }
             if guardar_en_nube("Despliegue geotextil", fecha.strftime("%Y-%m-%d"), datos_registro):
-                st.success(f"✅ Geotextil N° {num_panel} guardado en la nube.")
+                st.success(f"✅ Geotextil N° {num_panel} guardado.")
                 st.rerun()
 
 # ----------------- 3. PUESTA EN SERVICIO CUÑA -----------------
@@ -189,7 +196,7 @@ elif protocolo == "Puesta en servicio cuña":
                 "maquina_id": maquina_id, "temp": temp, "vel": vel, "ensayado_por": ensayado_por
             }
             if guardar_en_nube("Puesta en servicio cuña", fecha.strftime("%Y-%m-%d"), datos_registro):
-                st.success("✅ Prueba inicial de cuña guardada en la nube.")
+                st.success("✅ Prueba inicial de cuña guardada.")
                 st.rerun()
 
 # ----------------- 4. PUESTA EN SERVICIO EXTRUSORA -----------------
@@ -215,7 +222,7 @@ elif protocolo == "Puesta en servicio extrusora":
                 "maquina_id": maquina_id, "temp_pre": temp_pre, "temp_ext": temp_ext, "ensayado_por": ensayado_por
             }
             if guardar_en_nube("Puesta en servicio extrusora", fecha.strftime("%Y-%m-%d"), datos_registro):
-                st.success("✅ Prueba inicial de extrusora guardada en la nube.")
+                st.success("✅ Prueba inicial de extrusora guardada.")
                 st.rerun()
 
 # ----------------- 5. SOLDADURA POR CUÑA -----------------
@@ -244,7 +251,7 @@ elif protocolo == "Soldadura por cuña":
                 "qc_asistente": qc_asistente, "prueba_ok": prueba_ok
             }
             if guardar_en_nube("Soldadura por cuña", fecha_sold.strftime("%Y-%m-%d"), datos_registro):
-                st.success(f"✅ Costura {union_n} guardada en la nube.")
+                st.success(f"✅ Costura {union_n} guardada.")
                 st.rerun()
 
 # ----------------- 6. SOLDADURA POR EXTRUSIÓN -----------------
@@ -273,7 +280,7 @@ elif protocolo == "Soldadura por extrusión":
                 "probado_por": probado_por, "resultado_ok": resultado_ok
             }
             if guardar_en_nube("Soldadura por extrusión", fecha_sold.strftime("%Y-%m-%d"), datos_registro):
-                st.success(f"✅ Extrusión {parche_n} guardada en la nube.")
+                st.success(f"✅ Extrusión {parche_n} guardada.")
                 st.rerun()
 
 # ----------------- 7. ENSAYOS DESTRUCTIVOS -----------------
@@ -302,7 +309,7 @@ elif protocolo == "Ensayos destructivos":
                 "ensayado_por": ensayado_por, "ensayo_ok": ensayo_ok
             }
             if guardar_en_nube("Ensayos destructivos", fecha_sold.strftime("%Y-%m-%d"), datos_registro):
-                st.success(f"✅ Ensayo destructivo {destructivo_n} guardado en la nube.")
+                st.success(f"✅ Ensayo destructivo {destructivo_n} guardado.")
                 st.rerun()
 
 # ----------------- 8. ACEPTACIÓN SUPERFICIE -----------------
@@ -322,5 +329,5 @@ elif protocolo == "Aceptación Superficie":
                 "sector": sector, "estado": estado, "desc": desc
             }
             if guardar_en_nube("Aceptación Superficie", datetime.now().strftime("%Y-%m-%d"), datos_registro):
-                st.success("✅ Aceptación de superficie guardada en la nube.")
+                st.success("✅ Aceptación de superficie guardada.")
                 st.rerun()
