@@ -7,7 +7,7 @@ import streamlit as st
 EXCEL_FILE = os.path.abspath("datos.xlsx")
 
 def obtener_workbook_seguro():
-    """Carga el Excel de forma segura; si está corrupto (error CRC), regenera una planilla limpia automáticamente"""
+    """Carga el Excel de forma segura; si está corrupto, regenera una planilla limpia automáticamente"""
     hojas_requeridas = [
         "Despliegue geosintéticos", "Despliegue geotextil", 
         "Puesta en servicio cuña", "Puesta en servicio extrusora", 
@@ -28,7 +28,6 @@ def obtener_workbook_seguro():
     try:
         return openpyxl.load_workbook(EXCEL_FILE)
     except Exception as e:
-        # Si el archivo está corrupto (Bad CRC-32), lo aislamos y creamos uno nuevo limpio
         st.warning(f"⚠️ Detectado archivo Excel dañado ({e}). Reparando y generando estructura limpia...")
         if os.path.exists(EXCEL_FILE):
             try:
@@ -90,44 +89,43 @@ if os.path.exists(EXCEL_FILE):
 else:
     st.sidebar.warning("No se encontró el archivo Excel local.")
 
-# ----------------- BOTÓN DE REINICIO / LIMPIEZA TOTAL PROFUNDA -----------------
+# ----------------- BOTÓN DE REINICIO / LIMPIEZA TOTAL PRO -----------------
 st.sidebar.markdown("---")
 with st.sidebar.expander("⚙️ Opciones Avanzadas"):
-    st.warning("⚠️ Limpia por completo todas las planillas (rango ampliado hasta fila 300).")
+    st.warning("⚠️ Borra y reinicia por completo todas las planillas de datos.")
     if st.button("🧹 Limpiar Todas las Planillas (Nuevo Día)"):
         try:
             wb = obtener_workbook_seguro()
+            
+            # Definimos dónde empiezan los datos de cada hoja (los encabezados quedan intactos)
             rangos_limpieza = {
-                "Despliegue geosintéticos": (18, 300),
-                "Despliegue geotextil": (18, 300),
-                "Puesta en servicio cuña": (17, 300),
-                "Puesta en servicio extrusora": (17, 300),
-                "Soldadura por cuña": (17, 300),
-                "Soldadura por extrusión": (17, 300),
-                "Ensayos destructivos": (17, 300),
-                "Aceptación Superficie": (15, 200)
+                "Despliegue geosintéticos": 18,
+                "Despliegue geotextil": 18,
+                "Puesta en servicio cuña": 17,
+                "Puesta en servicio extrusora": 17,
+                "Soldadura por cuña": 17,
+                "Soldadura por extrusión": 17,
+                "Ensayos destructivos": 17,
+                "Aceptación Superficie": 15
             }
             
-            for sheet_name, (fila_ini, fila_fin) in rangos_limpieza.items():
+            for sheet_name, fila_ini in rangos_limpieza.items():
                 if sheet_name in wb.sheetnames:
                     ws = wb[sheet_name]
-                    celdas_combinadas = ws.merged_cells.ranges
-                    for r in range(fila_ini, fila_fin + 1):
-                        for c in range(1, 25):
-                            es_combinada = False
-                            for merged_range in celdas_combinadas:
-                                if (r >= merged_range.min_row and r <= merged_range.max_row and 
-                                    c >= merged_range.min_col and c <= merged_range.max_col):
-                                    es_combinada = True
-                                    break
-                            if not es_combinada:
-                                ws.cell(row=r, column=c).value = None
+                    # Eliminamos 300 filas de datos hacia abajo y dejamos la hoja limpia
+                    if ws.max_row >= fila_ini:
+                        total_filas = ws.max_row - fila_ini + 1
+                        ws.delete_rows(fila_ini, total_filas + 50)
             
             wb.save(EXCEL_FILE)
-            st.sidebar.success("✅ ¡Planillas limpiadas por completo!")
+            st.sidebar.success("✅ ¡Todas las planillas fueron limpiadas por completo desde la raíz!")
             st.rerun()
         except Exception as e:
             st.sidebar.error(f"Error al limpiar: {e}")
+
+if not os.path.exists(EXCEL_FILE):
+    st.error(f"No se encontró el archivo base '{EXCEL_FILE}'. Asegúrate de tenerlo en la misma carpeta.")
+    st.stop()
 
 # ----------------- 1. DESPLIEGUE GEOSINTÉTICOS -----------------
 if protocolo == "Despliegue geosintéticos":
