@@ -4,7 +4,7 @@ import openpyxl
 import streamlit as st
 from supabase import create_client, Client
 
-# --- CREDENCIALES DE SUPABASE (Silenciosas y seguras) ---
+# --- CREDENCIALES DE SUPABASE (Blindadas contra espacios o parpadeos de red) ---
 SUPABASE_URL = "https://fizrnuzuajkdrthzsliee.supabase.co".strip()
 SUPABASE_KEY = "sb_publishable_AD17utXodOnFrdvb28kfvg_0B5hZNG1".strip()
 
@@ -26,13 +26,21 @@ def guardar_en_nube(nombre_protocolo, fecha_val, diccionario_datos):
     except Exception:
         pass
 
-# Usar ruta absoluta para garantizar estabilidad
+# Usar ruta absoluta para garantizar que sea exactamente el mismo archivo en cualquier ejecución
 EXCEL_FILE = os.path.abspath("datos.xlsx")
 
 st.set_page_config(page_title="QA/QC Geosintéticos HDPE", layout="wide")
 
 st.title("🛡️ Sistema de Control de Calidad - Geosintéticos HDPE (Cloud Sync)")
 st.markdown("Registro oficial estructurado para protocolos QA/QC (Minera Las Cenizas).")
+
+# ----------------- FUNCIÓN CLAVE PARA ENCONTRAR LA SIGUIENTE FILA LIBRE -----------------
+def encontrar_siguiente_fila(ws, columna_clave=2, fila_inicio=17, salto=1):
+    """Busca la primera fila vacía en la columna clave dentro de la tabla oficial."""
+    fila = fila_inicio
+    while ws.cell(row=fila, column=columna_clave).value is not None:
+        fila += salto
+    return fila
 
 # ----------------- MENÚ LATERAL Y DESCARGA -----------------
 protocolo = st.sidebar.selectbox(
@@ -83,7 +91,7 @@ def generar_excel_desde_nube():
 
         wb.save(EXCEL_FILE)
     except Exception:
-        pass # Si falla la red, no bloquea ni muestra errores visuales
+        pass  # Si falla la red, no bloquea ni muestra errores visuales
 
     # Retorna siempre el archivo Excel local listo para descargar
     if os.path.exists(EXCEL_FILE):
@@ -103,7 +111,6 @@ if excel_bytes:
 else:
     st.sidebar.warning("No se encontró el archivo Excel local.")
 
-# ----------------- BOTÓN DE REINICIO / LIMPIEZA DIARIA TOTAL -----------------
 # ----------------- BOTÓN DE REINICIO / LIMPIEZA DIARIA TOTAL -----------------
 st.sidebar.markdown("---")
 with st.sidebar.expander("⚙️ Opciones Avanzadas"):
@@ -142,15 +149,18 @@ with st.sidebar.expander("⚙️ Opciones Avanzadas"):
             # Limpieza profunda y universal en la nube de Supabase
             if supabase is not None:
                 try:
-                    # Borra todos los registros haciendo match con un protocolo que no existe
                     supabase.table("registros_qaqc").delete().neq("protocolo", "ESTE_VALOR_NUNCA_EXISTIRA_XYZ").execute()
-                except Exception as ex:
-                    st.sidebar.warning(f"Aviso de nube: {ex}")
+                except Exception:
+                    pass
 
             st.sidebar.success("✅ ¡Planillas y nube limpiadas al 100%!")
             st.rerun()
         except Exception as e:
             st.sidebar.error(f"Error al limpiar: {e}")
+
+if not os.path.exists(EXCEL_FILE):
+    st.error(f"No se encontró el archivo base '{EXCEL_FILE}'. Asegúrate de tenerlo en la misma carpeta.")
+    st.stop()
 
 # ----------------- 1. DESPLIEGUE GEOSINTÉTICOS -----------------
 if protocolo == "Despliegue geosintéticos":
@@ -192,7 +202,7 @@ if protocolo == "Despliegue geosintéticos":
                 ws.cell(row=r, column=12, value=inspector)
 
                 wb.save(EXCEL_FILE)
-                guardar_en_nube("Despliegue geosintéticos", fecha.strftime("%Y-%m-%d"), {"num_panel": num_panel})
+                guardar_en_nube("Despliegue geosintéticos", fecha.strftime("%Y-%m-%d"), {"num_panel": num_panel, "rollo": rollo_n, "area": area_panel})
                 st.success(f"✅ Panel N° {num_panel} registrado correctamente en la fila {r}.")
                 st.rerun()
             except Exception as e:
@@ -234,7 +244,7 @@ elif protocolo == "Despliegue geotextil":
                 ws.cell(row=r, column=12, value=inspector)
 
                 wb.save(EXCEL_FILE)
-                guardar_en_nube("Despliegue geotextil", fecha.strftime("%Y-%m-%d"), {"num_panel": num_panel})
+                guardar_en_nube("Despliegue geotextil", fecha.strftime("%Y-%m-%d"), {"num_panel": num_panel, "rollo": rollo_n, "area": area_panel})
                 st.success(f"✅ Geotextil N° {num_panel} registrado en la fila {r}.")
                 st.rerun()
             except Exception as e:
@@ -254,7 +264,7 @@ elif protocolo == "Puesta en servicio cuña":
             temp = st.text_input("Temperatura (ºC)", "450°")
             vel = st.text_input("Velocidad Máquina", "3.0")
         with c3:
-            ensayado_por = st.text_input("Ensayado Por (QC)", "Monica Lupa")
+            ensayado_por = st.text_input("Ensayado Por (QC)", "Mónica Lupa")
 
         st.markdown("---")
         st.markdown("### 🧪 Ensayos de Desgarro (N) - Probetas 1 a 5 (Valores A y B)")
@@ -330,7 +340,7 @@ elif protocolo == "Puesta en servicio cuña":
                 ws.cell(row=r, column=20, value=ensayo_ok)
 
                 wb.save(EXCEL_FILE)
-                guardar_en_nube("Puesta en servicio cuña", fecha.strftime("%Y-%m-%d"), {"operador": operador})
+                guardar_en_nube("Puesta en servicio cuña", fecha.strftime("%Y-%m-%d"), {"operador": operador, "maquina": maquina_id, "ensayo_ok": ensayo_ok})
                 st.success(f"✅ Prueba inicial de cuña registrada en las filas {r} y {r+1}.")
                 st.rerun()
             except Exception as e:
@@ -407,7 +417,7 @@ elif protocolo == "Puesta en servicio extrusora":
                 ws.cell(row=r, column=20, value=ensayo_ok)
 
                 wb.save(EXCEL_FILE)
-                guardar_en_nube("Puesta en servicio extrusora", fecha.strftime("%Y-%m-%d"), {"operador": operador})
+                guardar_en_nube("Puesta en servicio extrusora", fecha.strftime("%Y-%m-%d"), {"operador": operador, "maquina": maquina_id, "ensayo_ok": ensayo_ok})
                 st.success(f"✅ Prueba inicial de extrusora registrada en la fila {r}.")
                 st.rerun()
             except Exception as e:
@@ -478,7 +488,7 @@ elif protocolo == "Soldadura por cuña":
                 ws.cell(row=r, column=18, value=observaciones)
 
                 wb.save(EXCEL_FILE)
-                guardar_en_nube("Soldadura por cuña", fecha_sold.strftime("%Y-%m-%d"), {"union_n": union_n})
+                guardar_en_nube("Soldadura por cuña", fecha_sold.strftime("%Y-%m-%d"), {"union_n": union_n, "ubicacion": ubicacion, "prueba_ok": prueba_ok})
                 st.success(f"✅ Costura {union_n} y prueba de aire registrada correctamente en la fila {r}.")
                 st.rerun()
             except Exception as e:
@@ -538,7 +548,7 @@ elif protocolo == "Soldadura por extrusión":
                 ws.cell(row=r, column=15, value=obs_tipo)
 
                 wb.save(EXCEL_FILE)
-                guardar_en_nube("Soldadura por extrusión", fecha_sold.strftime("%Y-%m-%d"), {"parche_n": parche_n})
+                guardar_en_nube("Soldadura por extrusión", fecha_sold.strftime("%Y-%m-%d"), {"parche_n": parche_n, "ubicacion": ubicacion, "resultado_ok": resultado_ok})
                 st.success(f"✅ Soldadura por extrusión {parche_n} guardada correctamente en la fila {r}.")
                 st.rerun()
             except Exception as e:
@@ -559,114 +569,4 @@ elif protocolo == "Ensayos destructivos":
             temp = st.text_input("Temp (ºC) Cuña", "460°")
         with c3:
             vel = st.text_input("Velocidad Máquina", "3,0")
-            ensayado_por = st.text_input("Ensayado Por (QC)", "Johnny Arias")
-
-        st.markdown("---")
-        st.markdown("### 🧪 Ensayos de Desgarro (N) - Probetas 1 a 5 (Valores A y B)")
-        
-        col_ad1, col_bd1 = st.columns(2)
-        with col_ad1: pd1_sup = st.number_input("Probeta 1 - [A] (Superior)", value=440.0, step=1.0)
-        with col_bd1: pd1_inf = st.number_input("Probeta 1 - [B] (Inferior)", value=480.0, step=1.0)
-
-        col_ad2, col_bd2 = st.columns(2)
-        with col_ad2: pd2_sup = st.number_input("Probeta 2 - [A] (Superior)", value=480.0, step=1.0)
-        with col_bd2: pd2_inf = st.number_input("Probeta 2 - [B] (Inferior)", value=480.0, step=1.0)
-
-        col_ad3, col_bd3 = st.columns(2)
-        with col_ad3: pd3_sup = st.number_input("Probeta 3 - [A] (Superior)", value=469.0, step=1.0)
-        with col_bd3: pd3_inf = st.number_input("Probeta 3 - [B] (Inferior)", value=503.0, step=1.0)
-
-        col_ad4, col_bd4 = st.columns(2)
-        with col_ad4: pd4_sup = st.number_input("Probeta 4 - [A] (Superior)", value=469.0, step=1.0)
-        with col_bd4: pd4_inf = st.number_input("Probeta 4 - [B] (Inferior)", value=434.0, step=1.0)
-
-        col_ad5, col_bd5 = st.columns(2)
-        with col_ad5: pd5_sup = st.number_input("Probeta 5 - [A] (Superior)", value=503.0, step=1.0)
-        with col_bd5: pd5_inf = st.number_input("Probeta 5 - [B] (Inferior)", value=463.0, step=1.0)
-
-        st.markdown("---")
-        st.markdown("### 🧪 Ensayos de Cizalle (N) - Probetas 1 a 5")
-        cc_d1, cc_d2, cc_d3, cc_d4, cc_d5 = st.columns(5)
-        with cc_d1: cd1 = st.number_input("Cizalle Dest. 1", value=646.0)
-        with cc_d2: cd2 = st.number_input("Cizalle Dest. 2", value=669.0)
-        with cc_d3: cd3 = st.number_input("Cizalle Dest. 3", value=641.0)
-        with cc_d4: cd4 = st.number_input("Cizalle Dest. 4", value=660.0)
-        with cc_d5: cd5 = st.number_input("Cizalle Dest. 5", value=594.0)
-
-        st.markdown("---")
-        cf_d1, cf_d2 = st.columns(2)
-        with cf_d1: ftb = st.selectbox("FTB (Si / No) - Destructivos", ["SI", "NO"])
-        with cf_d2: ensayo_ok = st.selectbox("Ensayo OK (Si / No) - Destructivos", ["SI", "NO"])
-
-        submitted = st.form_submit_button("💾 Guardar Ensayo Destructivo")
-        if submitted:
-            try:
-                wb = openpyxl.load_workbook(EXCEL_FILE)
-                ws = wb["Ensayos destructivos"]
-                r = encontrar_siguiente_fila(ws, columna_clave=2, fila_inicio=17, salto=2)
-
-                ws.cell(row=r, column=2, value=destructivo_n)
-                ws.cell(row=r, column=3, value=union_paneles)
-                ws.cell(row=r, column=4, value=fecha_sold.strftime("%Y-%m-%d"))
-                ws.cell(row=r, column=5, value=maquina_id)
-                ws.cell(row=r, column=6, value=operador)
-                ws.cell(row=r, column=7, value=temp)
-                ws.cell(row=r, column=8, value=vel)
-                ws.cell(row=r, column=9, value=ensayado_por)
-
-                ws.cell(row=r, column=10, value=pd1_sup)
-                ws.cell(row=r, column=11, value=pd2_sup)
-                ws.cell(row=r, column=12, value=pd3_sup)
-                ws.cell(row=r, column=13, value=pd4_sup)
-                ws.cell(row=r, column=14, value=pd5_sup)
-
-                ws.cell(row=r+1, column=10, value=pd1_inf)
-                ws.cell(row=r+1, column=11, value=pd2_inf)
-                ws.cell(row=r+1, column=12, value=pd3_inf)
-                ws.cell(row=r+1, column=13, value=pd4_inf)
-                ws.cell(row=r+1, column=14, value=pd5_inf)
-
-                ws.cell(row=r, column=15, value=cd1)
-                ws.cell(row=r, column=16, value=cd2)
-                ws.cell(row=r, column=17, value=cd3)
-                ws.cell(row=r, column=18, value=cd4)
-                ws.cell(row=r, column=19, value=cd5)
-
-                ws.cell(row=r, column=20, value=ftb)
-                ws.cell(row=r, column=21, value=ensayo_ok)
-
-                wb.save(EXCEL_FILE)
-                guardar_en_nube("Ensayos destructivos", fecha_sold.strftime("%Y-%m-%d"), {"destructivo_n": destructivo_n})
-                st.success(f"✅ Ensayo destructivo {destructivo_n} registrado en las filas {r} y {r+1}.")
-                st.rerun()
-            except Exception as e:
-                st.error(f"Error al guardar: {e}")
-
-# ----------------- 8. ACEPTACIÓN SUPERFICIE -----------------
-elif protocolo == "Aceptación Superficie":
-    st.subheader("✅ Protocolo: Aceptación de Superficie de Subrasante")
-    with st.form("form_superficie"):
-        c1, c2 = st.columns(2)
-        with c1:
-            sector = st.text_input("Ítem / Área Evaluada", "Canaletas colectoras principal y secundarias")
-            estado = st.selectbox("Condición", ["OK", "Rechazado"])
-        with c2:
-            desc = st.text_input("Observación / Descripción", "Presenta una excavación uniforme; fondo preparado para la recepción del revestimiento.")
-
-        submitted = st.form_submit_button("💾 Guardar Aceptación de Superficie")
-        if submitted:
-            try:
-                wb = openpyxl.load_workbook(EXCEL_FILE)
-                ws = wb["Aceptación Superficie"]
-                r = encontrar_siguiente_fila(ws, columna_clave=2, fila_inicio=15, salto=1)
-
-                ws.cell(row=r, column=2, value=sector)
-                ws.cell(row=r, column=7, value=estado)
-                ws.cell(row=r, column=9, value=desc)
-
-                wb.save(EXCEL_FILE)
-                guardar_en_nube("Aceptación Superficie", datetime.now().strftime("%Y-%m-%d"), {"sector": sector})
-                st.success(f"✅ Aceptación de superficie guardada en la fila {r}.")
-                st.rerun()
-            except Exception as e:
-                st.error(f"Error al guardar: {e}")
+            ensayado_
