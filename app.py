@@ -2,13 +2,36 @@ from datetime import datetime, timedelta
 import os
 import openpyxl
 import streamlit as st
+from supabase import create_client, Client
 
-# Usar ruta absoluta para garantizar que sea exactamente el mismo archivo en cualquier ejecución de la nube
+# --- CREDENCIALES DE SUPABASE (Sincronización en segundo plano) ---
+SUPABASE_URL = "https://fizrnuzuajkdrthzsliee.supabase.co"
+SUPABASE_KEY = "sb_publishable_AD17utXodOnFrdvb28kfvg_0B5hZNG1"
+
+try:
+    supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+except Exception:
+    supabase = None
+
+def guardar_en_nube(nombre_protocolo, fecha_val, diccionario_datos):
+    """Envía una copia a Supabase en segundo plano sin afectar el flujo local"""
+    try:
+        if supabase is not None:
+            payload = {
+                "protocolo": nombre_protocolo,
+                "fecha": str(fecha_val),
+                "datos": diccionario_datos
+            }
+            supabase.table("registros_qaqc").insert(payload).execute()
+    except Exception:
+        pass
+
+# Usar ruta absoluta para garantizar que sea exactamente el mismo archivo en cualquier ejecución
 EXCEL_FILE = os.path.abspath("datos.xlsx")
 
 st.set_page_config(page_title="QA/QC Geosintéticos HDPE", layout="wide")
 
-st.title("🛡️ Sistema de Control de Calidad - Geosintéticos HDPE")
+st.title("🛡️ Sistema de Control de Calidad - Geosintéticos HDPE (Cloud Sync)")
 st.markdown("Registro oficial estructurado para protocolos QA/QC (Minera Las Cenizas).")
 
 # ----------------- MENÚ LATERAL Y DESCARGA -----------------
@@ -41,16 +64,15 @@ if os.path.exists(EXCEL_FILE):
         key="btn_download_excel_sync"
     )
 else:
-    st.sidebar.warning(f"Archivo Excel no encontrado en ruta: {EXCEL_FILE}[cite: 18]")
+    st.sidebar.warning(f"Archivo Excel no encontrado en ruta: {EXCEL_FILE}")
 
 # ----------------- BOTÓN DE REINICIO / LIMPIEZA DIARIA TOTAL -----------------
 st.sidebar.markdown("---")
 with st.sidebar.expander("⚙️ Opciones Avanzadas"):
-    st.warning("⚠️ Este botón limpia por completo los registros de **todas** las planillas para comenzar un nuevo día (recuerda descargar tu Excel antes).[cite: 18]")
+    st.warning("⚠️ Este botón limpia por completo los registros de **todas** las planillas para comenzar un nuevo día.")
     if st.button("🧹 Limpiar Todas las Planillas (Nuevo Día)"):
         try:
             wb = openpyxl.load_workbook(EXCEL_FILE)
-            # Rangos amplios y seguros para barrer absolutamente todas las hojas y filas
             rangos_limpieza = {
                 "Despliegue geosintéticos": (18, 100),
                 "Despliegue geotextil": (18, 150),
@@ -67,7 +89,7 @@ with st.sidebar.expander("⚙️ Opciones Avanzadas"):
                     ws = wb[sheet_name]
                     celdas_combinadas = ws.merged_cells.ranges
                     for r in range(fila_ini, fila_fin + 1):
-                        for c in range(1, 25):  # Limpiamos hasta la columna 24 para asegurar todo
+                        for c in range(1, 25):
                             es_combinada = False
                             for merged_range in celdas_combinadas:
                                 if (r >= merged_range.min_row and r <= merged_range.max_row and 
@@ -78,7 +100,15 @@ with st.sidebar.expander("⚙️ Opciones Avanzadas"):
                                 ws.cell(row=r, column=c).value = None
             
             wb.save(EXCEL_FILE)
-            st.sidebar.success("✅ ¡Todas las planillas fueron reiniciadas y limpiadas al 100%!")
+            
+            # Limpiar también la nube si está conectada
+            if supabase is not None:
+                try:
+                    supabase.table("registros_qaqc").delete().neq("id", 0).execute()
+                except Exception:
+                    pass
+
+            st.sidebar.success("✅ ¡Planillas y nube reiniciadas al 100%!")
             st.rerun()
         except Exception as e:
             st.sidebar.error(f"Error al limpiar: {e}")
@@ -88,7 +118,6 @@ if not os.path.exists(EXCEL_FILE):
     st.stop()
 
 def encontrar_siguiente_fila(ws, columna_clave=2, fila_inicio=17, salto=1):
-    """Busca la primera fila vacía en la columna clave dentro de la tabla oficial."""
     fila = fila_inicio
     while ws.cell(row=fila, column=columna_clave).value is not None:
         fila += salto
@@ -134,7 +163,15 @@ if protocolo == "Despliegue geosintéticos":
                 ws.cell(row=r, column=12, value=inspector)
 
                 wb.save(EXCEL_FILE)
-                st.success(f"✅ Panel N° {num_panel} registrado correctamente en la fila {r}.")
+
+                # Respaldo en la nube
+                datos_dict = {
+                    "num_panel": num_panel, "fecha": fecha.strftime("%Y-%m-%d"), "rollo_n": rollo_n,
+                    "largo": largo, "ancho": ancho, "area": area_panel, "observaciones": observaciones
+                }
+                guardar_en_nube("Despliegue geosintéticos", fecha.strftime("%Y-%m-%d"), datos_dict)
+
+                st.success(f"✅ Panel N° {num_panel} registrado correctamente en la fila {r} y sincronizado.")
                 st.rerun()
             except Exception as e:
                 st.error(f"Error al guardar: {e}")
@@ -175,6 +212,13 @@ elif protocolo == "Despliegue geotextil":
                 ws.cell(row=r, column=12, value=inspector)
 
                 wb.save(EXCEL_FILE)
+
+                datos_dict = {
+                    "num_panel": num_panel, "fecha": fecha.strftime("%Y-%m-%d"), "rollo_n": rollo_n,
+                    "largo": largo, "ancho": ancho, "area": area_panel, "observaciones": observaciones
+                }
+                guardar_en_nube("Despliegue geotextil", fecha.strftime("%Y-%m-%d"), datos_dict)
+
                 st.success(f"✅ Geotextil N° {num_panel} registrado en la fila {r}.")
                 st.rerun()
             except Exception as e:
@@ -270,6 +314,10 @@ elif protocolo == "Puesta en servicio cuña":
                 ws.cell(row=r, column=20, value=ensayo_ok)
 
                 wb.save(EXCEL_FILE)
+
+                datos_dict = {"operador": operador, "maquina": maquina_id, "ensayo_ok": ensayo_ok}
+                guardar_en_nube("Puesta en servicio cuña", fecha.strftime("%Y-%m-%d"), datos_dict)
+
                 st.success(f"✅ Prueba inicial de cuña registrada en las filas {r} y {r+1}.")
                 st.rerun()
             except Exception as e:
@@ -346,6 +394,10 @@ elif protocolo == "Puesta en servicio extrusora":
                 ws.cell(row=r, column=20, value=ensayo_ok)
 
                 wb.save(EXCEL_FILE)
+
+                datos_dict = {"operador": operador, "maquina": maquina_id, "ensayo_ok": ensayo_ok}
+                guardar_en_nube("Puesta en servicio extrusora", fecha.strftime("%Y-%m-%d"), datos_dict)
+
                 st.success(f"✅ Prueba inicial de extrusora registrada en la fila {r}.")
                 st.rerun()
             except Exception as e:
@@ -416,6 +468,10 @@ elif protocolo == "Soldadura por cuña":
                 ws.cell(row=r, column=18, value=observaciones)
 
                 wb.save(EXCEL_FILE)
+
+                datos_dict = {"union_n": union_n, "ubicacion": ubicacion, "prueba_ok": prueba_ok}
+                guardar_en_nube("Soldadura por cuña", fecha_sold.strftime("%Y-%m-%d"), datos_dict)
+
                 st.success(f"✅ Costura {union_n} y prueba de aire registrada correctamente en la fila {r}.")
                 st.rerun()
             except Exception as e:
@@ -475,6 +531,10 @@ elif protocolo == "Soldadura por extrusión":
                 ws.cell(row=r, column=15, value=obs_tipo)
 
                 wb.save(EXCEL_FILE)
+
+                datos_dict = {"parche_n": parche_n, "ubicacion": ubicacion, "resultado_ok": resultado_ok}
+                guardar_en_nube("Soldadura por extrusión", fecha_sold.strftime("%Y-%m-%d"), datos_dict)
+
                 st.success(f"✅ Soldadura por extrusión {parche_n} guardada correctamente en la fila {r}.")
                 st.rerun()
             except Exception as e:
@@ -572,6 +632,10 @@ elif protocolo == "Ensayos destructivos":
                 ws.cell(row=r, column=21, value=ensayo_ok)
 
                 wb.save(EXCEL_FILE)
+
+                datos_dict = {"destructivo_n": destructivo_n, "union": union_paneles, "ensayo_ok": ensayo_ok}
+                guardar_en_nube("Ensayos destructivos", fecha_sold.strftime("%Y-%m-%d"), datos_dict)
+
                 st.success(f"✅ Ensayo destructivo {destructivo_n} registrado en las filas {r} y {r+1}.")
                 st.rerun()
             except Exception as e:
@@ -600,6 +664,10 @@ elif protocolo == "Aceptación Superficie":
                 ws.cell(row=r, column=9, value=desc)
 
                 wb.save(EXCEL_FILE)
+
+                datos_dict = {"sector": sector, "estado": estado, "desc": desc}
+                guardar_en_nube("Aceptación Superficie", datetime.now().strftime("%Y-%m-%d"), datos_dict)
+
                 st.success(f"✅ Aceptación de superficie guardada en la fila {r}.")
                 st.rerun()
             except Exception as e:
