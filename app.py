@@ -4,7 +4,7 @@ import openpyxl
 import streamlit as st
 from supabase import create_client, Client
 
-# --- CREDENCIALES DE SUPABASE (Blindadas contra espacios o parpadeos de red) ---
+# --- CREDENCIALES DE SUPABASE ---
 SUPABASE_URL = "https://fizrnuzuajkdrthzsliee.supabase.co".strip()
 SUPABASE_KEY = "sb_publishable_AD17utXodOnFrdvb28kfvg_0B5hZNG1".strip()
 
@@ -26,7 +26,7 @@ def guardar_en_nube(nombre_protocolo, fecha_val, diccionario_datos):
     except Exception:
         pass
 
-# Usar ruta absoluta para garantizar que sea exactamente el mismo archivo en cualquier ejecución
+# Ruta absoluta al Excel oficial
 EXCEL_FILE = os.path.abspath("datos.xlsx")
 
 st.set_page_config(page_title="QA/QC Geosintéticos HDPE", layout="wide")
@@ -34,7 +34,6 @@ st.set_page_config(page_title="QA/QC Geosintéticos HDPE", layout="wide")
 st.title("🛡️ Sistema de Control de Calidad - Geosintéticos HDPE (Cloud Sync)")
 st.markdown("Registro oficial estructurado para protocolos QA/QC (Minera Las Cenizas).")
 
-# ----------------- FUNCIÓN CLAVE PARA ENCONTRAR LA SIGUIENTE FILA LIBRE -----------------
 def encontrar_siguiente_fila(ws, columna_clave=2, fila_inicio=17, salto=1):
     """Busca la primera fila vacía en la columna clave dentro de la tabla oficial."""
     fila = fila_inicio
@@ -73,7 +72,6 @@ def generar_excel_desde_nube():
         else:
             return None
 
-        # Volcar los registros de la nube en las hojas correspondientes del Excel
         for reg in registros:
             proto = reg.get("protocolo")
             datos = reg.get("datos", {})
@@ -91,9 +89,8 @@ def generar_excel_desde_nube():
 
         wb.save(EXCEL_FILE)
     except Exception:
-        pass  # Si falla la red, no bloquea ni muestra errores visuales
+        pass
 
-    # Retorna siempre el archivo Excel local listo para descargar
     if os.path.exists(EXCEL_FILE):
         with open(EXCEL_FILE, "rb") as f:
             return f.read()
@@ -146,7 +143,6 @@ with st.sidebar.expander("⚙️ Opciones Avanzadas"):
             
             wb.save(EXCEL_FILE)
             
-            # Limpieza profunda y universal en la nube de Supabase
             if supabase is not None:
                 try:
                     supabase.table("registros_qaqc").delete().neq("protocolo", "ESTE_VALOR_NUNCA_EXISTIRA_XYZ").execute()
@@ -569,4 +565,114 @@ elif protocolo == "Ensayos destructivos":
             temp = st.text_input("Temp (ºC) Cuña", "460°")
         with c3:
             vel = st.text_input("Velocidad Máquina", "3,0")
-            ensayado_
+            ensayado_por = st.text_input("Ensayado Por (QC)", "Johnny Arias")
+
+        st.markdown("---")
+        st.markdown("### 🧪 Ensayos de Desgarro (N) - Probetas 1 a 5 (Valores A y B)")
+        
+        col_ad1, col_bd1 = st.columns(2)
+        with col_ad1: pd1_sup = st.number_input("Probeta 1 - [A] (Superior)", value=440.0, step=1.0)
+        with col_bd1: pd1_inf = st.number_input("Probeta 1 - [B] (Inferior)", value=480.0, step=1.0)
+
+        col_ad2, col_bd2 = st.columns(2)
+        with col_ad2: pd2_sup = st.number_input("Probeta 2 - [A] (Superior)", value=480.0, step=1.0)
+        with col_bd2: pd2_inf = st.number_input("Probeta 2 - [B] (Inferior)", value=480.0, step=1.0)
+
+        col_ad3, col_bd3 = st.columns(2)
+        with col_ad3: pd3_sup = st.number_input("Probeta 3 - [A] (Superior)", value=469.0, step=1.0)
+        with col_bd3: pd3_inf = st.number_input("Probeta 3 - [B] (Inferior)", value=503.0, step=1.0)
+
+        col_ad4, col_bd4 = st.columns(2)
+        with col_ad4: pd4_sup = st.number_input("Probeta 4 - [A] (Superior)", value=469.0, step=1.0)
+        with col_bd4: pd4_inf = st.number_input("Probeta 4 - [B] (Inferior)", value=434.0, step=1.0)
+
+        col_ad5, col_bd5 = st.columns(2)
+        with col_ad5: pd5_sup = st.number_input("Probeta 5 - [A] (Superior)", value=503.0, step=1.0)
+        with col_bd5: pd5_inf = st.number_input("Probeta 5 - [B] (Inferior)", value=463.0, step=1.0)
+
+        st.markdown("---")
+        st.markdown("### 🧪 Ensayos de Cizalle (N) - Probetas 1 a 5")
+        cc_d1, cc_d2, cc_d3, cc_d4, cc_d5 = st.columns(5)
+        with cc_d1: cd1 = st.number_input("Cizalle Dest. 1", value=646.0)
+        with cc_d2: cd2 = st.number_input("Cizalle Dest. 2", value=669.0)
+        with cc_d3: cd3 = st.number_input("Cizalle Dest. 3", value=641.0)
+        with cc_d4: cd4 = st.number_input("Cizalle Dest. 4", value=660.0)
+        with cc_d5: cd5 = st.number_input("Cizalle Dest. 5", value=594.0)
+
+        st.markdown("---")
+        cf_d1, cf_d2 = st.columns(2)
+        with cf_d1: ftb = st.selectbox("FTB (Si / No) - Destructivos", ["SI", "NO"])
+        with cf_d2: ensayo_ok = st.selectbox("Ensayo OK (Si / No) - Destructivos", ["SI", "NO"])
+
+        submitted = st.form_submit_button("💾 Guardar Ensayo Destructivo")
+        if submitted:
+            try:
+                wb = openpyxl.load_workbook(EXCEL_FILE)
+                ws = wb["Ensayos destructivos"]
+                r = encontrar_siguiente_fila(ws, columna_clave=2, fila_inicio=17, salto=2)
+
+                ws.cell(row=r, column=2, value=destructivo_n)
+                ws.cell(row=r, column=3, value=union_paneles)
+                ws.cell(row=r, column=4, value=fecha_sold.strftime("%Y-%m-%d"))
+                ws.cell(row=r, column=5, value=maquina_id)
+                ws.cell(row=r, column=6, value=operador)
+                ws.cell(row=r, column=7, value=temp)
+                ws.cell(row=r, column=8, value=vel)
+                ws.cell(row=r, column=9, value=ensayado_por)
+
+                ws.cell(row=r, column=10, value=pd1_sup)
+                ws.cell(row=r, column=11, value=pd2_sup)
+                ws.cell(row=r, column=12, value=pd3_sup)
+                ws.cell(row=r, column=13, value=pd4_sup)
+                ws.cell(row=r, column=14, value=pd5_sup)
+
+                ws.cell(row=r+1, column=10, value=pd1_inf)
+                ws.cell(row=r+1, column=11, value=pd2_inf)
+                ws.cell(row=r+1, column=12, value=pd3_inf)
+                ws.cell(row=r+1, column=13, value=pd4_inf)
+                ws.cell(row=r+1, column=14, value=pd5_inf)
+
+                ws.cell(row=r, column=15, value=cd1)
+                ws.cell(row=r, column=16, value=cd2)
+                ws.cell(row=r, column=17, value=cd3)
+                ws.cell(row=r, column=18, value=cd4)
+                ws.cell(row=r, column=19, value=cd5)
+
+                ws.cell(row=r, column=20, value=ftb)
+                ws.cell(row=r, column=21, value=ensayo_ok)
+
+                wb.save(EXCEL_FILE)
+                guardar_en_nube("Ensayos destructivos", fecha_sold.strftime("%Y-%m-%d"), {"destructivo_n": destructivo_n, "union": union_paneles, "ensayo_ok": ensayo_ok})
+                st.success(f"✅ Ensayo destructivo {destructivo_n} registrado en las filas {r} y {r+1}.")
+                st.rerun()
+            except Exception as e:
+                st.error(f"Error al guardar: {e}")
+
+# ----------------- 8. ACEPTACIÓN SUPERFICIE -----------------
+elif protocolo == "Aceptación Superficie":
+    st.subheader("✅ Protocolo: Aceptación de Superficie de Subrasante")
+    with st.form("form_superficie"):
+        c1, c2 = st.columns(2)
+        with c1:
+            sector = st.text_input("Ítem / Área Evaluada", "Canaletas colectoras principal y secundarias")
+            estado = st.selectbox("Condición", ["OK", "Rechazado"])
+        with c2:
+            desc = st.text_input("Observación / Descripción", "Presenta una excavación uniforme; fondo preparado para la recepción del revestimiento.")
+
+        submitted = st.form_submit_button("💾 Guardar Aceptación de Superficie")
+        if submitted:
+            try:
+                wb = openpyxl.load_workbook(EXCEL_FILE)
+                ws = wb["Aceptación Superficie"]
+                r = encontrar_siguiente_fila(ws, columna_clave=2, fila_inicio=15, salto=1)
+
+                ws.cell(row=r, column=2, value=sector)
+                ws.cell(row=r, column=7, value=estado)
+                ws.cell(row=r, column=9, value=desc)
+
+                wb.save(EXCEL_FILE)
+                guardar_en_nube("Aceptación Superficie", datetime.now().strftime("%Y-%m-%d"), {"sector": sector, "estado": estado, "desc": desc})
+                st.success(f"✅ Aceptación de superficie guardada en la fila {r}.")
+                st.rerun()
+            except Exception as e:
+                st.error(f"Error al guardar: {e}")
