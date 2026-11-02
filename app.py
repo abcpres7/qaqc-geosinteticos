@@ -104,9 +104,10 @@ else:
     st.sidebar.warning("No se encontró el archivo Excel local.")
 
 # ----------------- BOTÓN DE REINICIO / LIMPIEZA DIARIA TOTAL -----------------
+# ----------------- BOTÓN DE REINICIO / LIMPIEZA DIARIA TOTAL -----------------
 st.sidebar.markdown("---")
 with st.sidebar.expander("⚙️ Opciones Avanzadas"):
-    st.warning("⚠️ Este botón limpia por completo los registros de **todas** las planillas para comenzar un nuevo día.")
+    st.warning("⚠️ Este botón limpia por completo los registros de **todas** las planillas y de la nube.")
     if st.button("🧹 Limpiar Todas las Planillas (Nuevo Día)"):
         try:
             wb = openpyxl.load_workbook(EXCEL_FILE)
@@ -138,26 +139,18 @@ with st.sidebar.expander("⚙️ Opciones Avanzadas"):
             
             wb.save(EXCEL_FILE)
             
+            # Limpieza profunda y universal en la nube de Supabase
             if supabase is not None:
                 try:
-                    supabase.table("registros_qaqc").delete().neq("id", 0).execute()
-                except Exception:
-                    pass
+                    # Borra todos los registros haciendo match con un protocolo que no existe
+                    supabase.table("registros_qaqc").delete().neq("protocolo", "ESTE_VALOR_NUNCA_EXISTIRA_XYZ").execute()
+                except Exception as ex:
+                    st.sidebar.warning(f"Aviso de nube: {ex}")
 
-            st.sidebar.success("✅ ¡Planillas y nube reiniciadas al 100%!")
+            st.sidebar.success("✅ ¡Planillas y nube limpiadas al 100%!")
             st.rerun()
         except Exception as e:
             st.sidebar.error(f"Error al limpiar: {e}")
-
-if not os.path.exists(EXCEL_FILE):
-    st.error(f"No se encontró el archivo base '{EXCEL_FILE}'. Asegúrate de tenerlo en la misma carpeta.")
-    st.stop()
-
-def encontrar_siguiente_fila(ws, columna_clave=2, fila_inicio=17, salto=1):
-    fila = fila_inicio
-    while ws.cell(row=fila, column=columna_clave).value is not None:
-        fila += salto
-    return fila
 
 # ----------------- 1. DESPLIEGUE GEOSINTÉTICOS -----------------
 if protocolo == "Despliegue geosintéticos":
