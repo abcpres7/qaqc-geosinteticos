@@ -14,7 +14,7 @@ except Exception:
     supabase = None
 
 def guardar_en_nube(nombre_protocolo, fecha_val, diccionario_datos):
-    """Envía una copia a Supabase en segundo plano de forma silenciosa"""
+    """Envía el registro a Supabase y muestra cualquier error en pantalla si falla"""
     try:
         if supabase is not None:
             payload = {
@@ -22,9 +22,15 @@ def guardar_en_nube(nombre_protocolo, fecha_val, diccionario_datos):
                 "fecha": str(fecha_val),
                 "datos": diccionario_datos
             }
-            supabase.table("registros_qaqc").insert(payload).execute()
-    except Exception:
-        pass
+            # Intentar insertar en la tabla de Supabase
+            response = supabase.table("registros_qaqc").insert(payload).execute()
+            return True
+        else:
+            st.error("❌ Error de conexión: El cliente de Supabase no se pudo inicializar.")
+            return False
+    except Exception as e:
+        st.error(f"❌ Error detallado de Supabase al guardar: {e}")
+        return False
 
 # Ruta absoluta al Excel oficial
 EXCEL_FILE = os.path.abspath("datos.xlsx")
