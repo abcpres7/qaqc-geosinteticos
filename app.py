@@ -135,7 +135,7 @@ if protocolo == "Despliegue geosintéticos":
       fecha = st.date_input("Fecha de Instalación", datetime.now())
       rollo_n = st.text_input("N° de Rollo", "R-001")
     with c2:
-      hora_inst = st.str(datetime.now().time())
+      hora_inst = str(datetime.now().time())
       largo = st.number_input("Largo (m)", min_value=0.0, value=25.0, step=0.1)
       ancho = st.number_input("Ancho (m)", min_value=0.0, value=7.01, step=0.01)
     with c3:
